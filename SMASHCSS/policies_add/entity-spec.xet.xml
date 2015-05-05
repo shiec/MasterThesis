@@ -1,0 +1,236 @@
+<xet:XET xmlns:xet="http://xet.sf.net" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:smash="http://smash.item.ntnu.no#">
+  <xet:Fact>
+  	<smash:Entity rdf:about="LivingRoom">
+  	  <smash:PhyscialSpec>
+  	    <smash:length>4</smash:length>
+  	    <smash:width>4</smash:width>
+  	    <smash:height>2.6</smash:height>
+  	  </smash:PhyscialSpec>
+  	  <smash:DeviceSpec>
+  	  	<smash:power>2400</smash:power>
+  	  </smash:DeviceSpec>
+  	  <smash:ComfortSpec>
+	    <smash:normalComfort>26</smash:normalComfort>
+		<smash:reducedComfort>21</smash:reducedComfort>
+		<smash:unacceptableComfort>18</smash:unacceptableComfort>
+	  </smash:ComfortSpec>
+	  <smash:LightingSpec>
+	    <smash:utilizationFactor>0.7</smash:utilizationFactor>
+	    <smash:lightLossFactor>0.8</smash:lightLossFactor>
+	    <smash:illuminanceReduced>40.0</smash:illuminanceReduced>
+	    <smash:illuminanceLimit>28.0</smash:illuminanceLimit>
+	  </smash:LightingSpec>
+	  <smash:Lights>
+	    <smash:Light rdf:about="Light1">
+	      <smash:lumen>400</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	    <smash:Light rdf:about="Light2">
+	      <smash:lumen>400</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	    <smash:Light rdf:about="Light3">
+	      <smash:lumen>400</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	    <smash:Light rdf:about="Light4">
+	      <smash:lumen>400</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	  </smash:Lights>
+  	</smash:Entity>
+    <smash:Entity rdf:about="Kitchen">
+  	  <smash:PhyscialSpec>
+  	    <smash:length>4</smash:length>
+  	    <smash:width>3</smash:width>
+  	    <smash:height>2.6</smash:height>
+  	  </smash:PhyscialSpec>
+  	  <smash:DeviceSpec>
+  	  	<smash:power>1200</smash:power>
+  	  </smash:DeviceSpec>
+  	  <smash:ComfortSpec>
+	    <smash:normalComfort>25</smash:normalComfort>
+		<smash:reducedComfort>20</smash:reducedComfort>
+		<smash:unacceptableComfort>17</smash:unacceptableComfort>
+	  </smash:ComfortSpec>
+	  <smash:LightingSpec>
+	    <smash:utilizationFactor>0.7</smash:utilizationFactor>
+	    <smash:lightLossFactor>0.8</smash:lightLossFactor>
+	    <smash:illuminanceReduced>131.0</smash:illuminanceReduced>
+	    <smash:illuminanceLimit>93.0</smash:illuminanceLimit>
+	  </smash:LightingSpec>
+	  <smash:Lights>
+	    <smash:Light rdf:about="Light5">
+	      <smash:lumen>1000</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	    <smash:Light rdf:about="Light6">
+	      <smash:lumen>1000</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	    <smash:Light rdf:about="Light7">
+	      <smash:lumen>1000</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	    <smash:Light rdf:about="Light8">
+	      <smash:lumen>1000</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	  </smash:Lights>
+  	</smash:Entity>
+  	<smash:Entity rdf:about="Bathroom1">
+  	  <smash:PhyscialSpec>
+  	    <smash:length>5</smash:length>
+  	    <smash:width>2.75</smash:width>
+  	    <smash:height>2.6</smash:height>
+  	  </smash:PhyscialSpec>
+  	  <smash:DeviceSpec>
+  	  	<smash:power>1500</smash:power>
+  	  </smash:DeviceSpec>
+  	  <smash:ComfortSpec>
+	    <smash:normalComfort>28</smash:normalComfort>
+		<smash:reducedComfort>24</smash:reducedComfort>
+		<smash:unacceptableComfort>20</smash:unacceptableComfort>
+	  </smash:ComfortSpec>
+	  <smash:LightingSpec>
+	    <smash:utilizationFactor>0.7</smash:utilizationFactor>
+	    <smash:lightLossFactor>0.8</smash:lightLossFactor>
+	    <smash:illuminanceReduced>105.0</smash:illuminanceReduced>
+	    <smash:illuminanceLimit>75.0</smash:illuminanceLimit>
+	  </smash:LightingSpec>
+	  <smash:Lights>
+	    <smash:Light rdf:about="Light9">
+	      <smash:lumen>2000</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	    <smash:Light rdf:about="Light10">
+	      <smash:lumen>2000</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	  </smash:Lights>
+	  <smash:WashingMachine rdf:about="WashingMachine1">
+	    <smash:MachineSpec>
+	      <smash:LatestTime>21</smash:LatestTime>
+	    </smash:MachineSpec>
+	    <smash:Programs>
+	      <smash:Program smash:name="synthetics_40_1400">
+	        <smash:time>80</smash:time>
+	      </smash:Program>
+	      <smash:Program smash:name="wool_40_1000">
+	        <smash:time>40</smash:time>
+	      </smash:Program>
+	    </smash:Programs>
+	  </smash:WashingMachine>
+  	</smash:Entity>
+  	<smash:Entity rdf:about="Bathroom2">
+  	  <smash:PhyscialSpec>
+  	    <smash:length>4</smash:length>
+  	    <smash:width>2.5</smash:width>
+  	    <smash:height>2.6</smash:height>
+  	  </smash:PhyscialSpec>
+  	  <smash:DeviceSpec>
+  	  	<smash:power>1500</smash:power>
+  	  </smash:DeviceSpec>
+  	  <smash:ComfortSpec>
+	    <smash:normalComfort>28</smash:normalComfort>
+		<smash:reducedComfort>20</smash:reducedComfort>
+		<smash:unacceptableComfort>18</smash:unacceptableComfort>
+	  </smash:ComfortSpec>
+	  <smash:LightingSpec>
+	    <smash:utilizationFactor>0.7</smash:utilizationFactor>
+	    <smash:lightLossFactor>0.8</smash:lightLossFactor>
+	    <smash:illuminanceReduced>105.0</smash:illuminanceReduced>
+	    <smash:illuminanceLimit>75.0</smash:illuminanceLimit>
+	  </smash:LightingSpec>
+	  <smash:Lights>
+	    <smash:Light rdf:about="Light11">
+	      <smash:lumen>1500</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	    <smash:Light rdf:about="Light12">
+	      <smash:lumen>1500</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	  </smash:Lights>
+  	</smash:Entity>
+  	<smash:Entity rdf:about="Bedroom1">
+  	  <smash:PhyscialSpec>
+  	    <smash:length>6</smash:length>
+  	    <smash:width>3</smash:width>
+  	    <smash:height>2.6</smash:height>
+  	  </smash:PhyscialSpec>
+  	  <smash:DeviceSpec>
+  	  	<smash:power>1200</smash:power>
+  	  </smash:DeviceSpec>
+  	  <smash:ComfortSpec>
+	    <smash:normalComfort>26</smash:normalComfort>
+		<smash:reducedComfort>21</smash:reducedComfort>
+		<smash:unacceptableComfort>18</smash:unacceptableComfort>
+	  </smash:ComfortSpec>
+	  <smash:LightingSpec>
+	    <smash:utilizationFactor>0.7</smash:utilizationFactor>
+	    <smash:lightLossFactor>0.8</smash:lightLossFactor>
+	    <smash:illuminanceReduced>35.0</smash:illuminanceReduced>
+	    <smash:illuminanceLimit>25.0</smash:illuminanceLimit>
+	  </smash:LightingSpec>
+	  <smash:Lights>
+	    <smash:Light rdf:about="Light13">
+	      <smash:lumen>500</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	    <smash:Light rdf:about="Light14">
+	      <smash:lumen>500</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	    <smash:Light rdf:about="Light15">
+	      <smash:lumen>500</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	    <smash:Light rdf:about="Light16">
+	      <smash:lumen>500</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	  </smash:Lights>
+  	</smash:Entity>
+  	<smash:Entity rdf:about="Bedroom2">
+  	  <smash:PhyscialSpec>
+  	    <smash:length>4.5</smash:length>
+  	    <smash:width>3</smash:width>
+  	    <smash:height>2.6</smash:height>
+  	  </smash:PhyscialSpec>
+  	  <smash:DeviceSpec>
+  	  	<smash:power>1200</smash:power>
+  	  </smash:DeviceSpec>
+  	  <smash:ComfortSpec>
+	    <smash:normalComfort>26</smash:normalComfort>
+		<smash:reducedComfort>21</smash:reducedComfort>
+		<smash:unacceptableComfort>18</smash:unacceptableComfort>
+	  </smash:ComfortSpec>
+	  <smash:LightingSpec>
+	    <smash:utilizationFactor>0.7</smash:utilizationFactor>
+	    <smash:lightLossFactor>0.8</smash:lightLossFactor>
+	    <smash:illuminanceReduced>35.0</smash:illuminanceReduced>
+	    <smash:illuminanceLimit>25.0</smash:illuminanceLimit>
+	  </smash:LightingSpec>
+	  <smash:Lights>
+	    <smash:Light rdf:about="Light17">
+	      <smash:lumen>400</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	    <smash:Light rdf:about="Light18">
+	      <smash:lumen>400</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	    <smash:Light rdf:about="Light19">
+	      <smash:lumen>400</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	    <smash:Light rdf:about="Light20">
+	      <smash:lumen>400</smash:lumen>
+	      <smash:power>30</smash:power>
+	    </smash:Light>
+	  </smash:Lights>
+  	</smash:Entity>   
+  </xet:Fact>
+</xet:XET>

@@ -1,0 +1,326 @@
+<xet:XET xmlns:xet="http://xet.sf.net" xmlns:xfn="http://tapas.item.ntnu.no/NxET/built-in/corefunctions" 
+		 xmlns:sfn="http://tapas.item.ntnu.no/NxET/built-in/string"
+	     xmlns:tfn="http://tapas.item.ntnu.no/NxET/built-in/time"
+		 xmlns:css="http://smash.item.ntnu.no/NxET/built-in"
+         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:smash="http://smash.item.ntnu.no#">
+  <xet:Meta>
+    <xet:SpecificationVersion>0.1</xet:SpecificationVersion>
+  </xet:Meta>
+  <xet:Data>datasources.xet.xml</xet:Data>
+  <xet:Rule xet:name='ConstructSet' xet:priority='1'>
+    <xet:Head>
+      <smash:Actions smash:setNumber="Svar_sn">
+	      Evar_entities
+	  </smash:Actions>
+    </xet:Head>
+    <xet:Body>
+      <xfn:SetOf xfn:mode='Set'>
+        <xfn:Set>Evar_entities</xfn:Set>
+        <xfn:Constructor>
+		  Evar_entitySchedule
+        </xfn:Constructor>
+        <xfn:Condition>
+          <CheckSpecification/>  
+		</xfn:Condition>
+      </xfn:SetOf>
+	  <xfn:Add xfn:number1="0" xfn:number2="1" xfn:result="Svar_sn" />
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='CheckSpecification' xet:priority='1'>
+    <xet:Head>
+	  <CheckSpecification/>
+	</xet:Head>
+	<xet:Body>
+	  <css:GetRemoteData css:provider="DSO" css:operation="getEstElectricityPrices" css:return_prices="Svar_Data_prices"/>
+	  <css:DetectPeakUpwardTrend>
+	    <css:PriceData>Svar_Data_prices</css:PriceData>
+		<css:Difference>0.1</css:Difference>
+		<css:ResultSet>
+		  Evar_peakMap
+		</css:ResultSet>
+	  </css:DetectPeakUpwardTrend>
+	  <CheckEntities>Evar_peakMap</CheckEntities>
+	</xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='CheckEntities' xet:priority='1'>
+    <xet:Head>
+	  <CheckEntities>Evar_highPricedHours</CheckEntities>
+	</xet:Head>
+	<xet:Body>
+	  <xfn:FactQuery xfn:uri='ds://Entity-Spec' xfn:mode='Set'>
+        <smash:Entity rdf:about='Svar_EntityID'>
+		  <smash:PhyscialSpec>
+  	        <smash:length>Svar_rlength</smash:length>
+  	        <smash:width>Svar_rwidth</smash:width>
+  	        <smash:height>Svar_rheight</smash:height>
+  	      </smash:PhyscialSpec>
+		  <smash:DeviceSpec>
+  	  	    <smash:power>Svar_power</smash:power>
+  	      </smash:DeviceSpec>
+		  <smash:ComfortSpec>
+		    <smash:reducedComfort>Svar_reducedComfort</smash:reducedComfort>
+			<smash:unacceptableComfort>Svar_unacceptable</smash:unacceptableComfort>
+		  </smash:ComfortSpec>
+        </smash:Entity>
+      </xfn:FactQuery>
+	  <css:GetRemoteData css:provider="SIMENV" css:operation="getExtendedSchedule" css:param1="room" css:param1_val="Svar_EntityID" css:param2="extendedHours" css:param2_val="3" 
+	    css:return_extendedSchedule="Svar_extended_schedule"/>
+	  <sfn:ConcatString sfn:string1="Svar_EntityID" sfn:string2="extendedSchedule" sfn:result="Svar_key" />	
+	  <xfn:SetInMemoryObject xfn:key="Svar_key" xfn:value="Svar_extended_schedule" xfn:result="Svar_dummy"/>
+	  <xfn:LoopSet xfn:mode='Map'>
+	    <xfn:Maps>
+		  Evar_highPricedHours
+		</xfn:Maps>
+		<xfn:Extract>
+		  <xfn:Map>
+		    <xfn:Key>Svar_t</xfn:Key>
+		  </xfn:Map>
+		</xfn:Extract>
+	  </xfn:LoopSet>
+	  <xfn:SetOf xfn:mode='Set'>
+        <xfn:Set>Evar_entitySchedule1</xfn:Set>
+        <xfn:Constructor>
+		<smash:ActionSet smash:set="1" smash:key1="Svar_EntityID" smash:key2="Svar_t">
+		  <smash:Action smash:type="RoomSchedulingAction">
+		    <smash:Entity>Svar_EntityID</smash:Entity>
+			<smash:start>Svar_tMin1_dateString</smash:start>
+	        <smash:duration>60</smash:duration>
+	        <smash:newTemp>Svar_tMin1newSetpoint</smash:newTemp>
+	        <smash:cost smash:cost_cost="Svar_cost_cost1" smash:cost_comfort="0"/>
+		  </smash:Action>
+		  <smash:Action smash:type="RoomSchedulingAction">
+		    <smash:Entity>Svar_EntityID</smash:Entity>
+			<smash:start>Svar_t_dateString</smash:start>
+	        <smash:duration>60</smash:duration>
+	        <smash:newTemp>-9999</smash:newTemp>
+	        <smash:cost smash:cost_cost="Svar_cost_cost2" smash:cost_comfort="0"/>
+		  </smash:Action>
+		</smash:ActionSet>
+        </xfn:Constructor>
+        <xfn:Condition>
+          <GenerateAction1>
+		    <T>Svar_t</T>
+			<Entity>Svar_EntityID</Entity>
+			<ReducedComfort>Svar_reducedComfort</ReducedComfort>
+			<UnacceptableComfort>Svar_unacceptable</UnacceptableComfort>
+			<Power>Svar_power</Power>
+			<PhyscialSpec>
+			  <length>Svar_rlength</length>
+			  <width>Svar_rwidth</width>
+			  <height>Svar_rheight</height>
+			</PhyscialSpec>
+			<Result>Svar_cost_result</Result>
+		  </GenerateAction1>
+		</xfn:Condition>
+      </xfn:SetOf>
+	  <css:ChooseActionSet>
+	    <css:ActionSets>	
+		  Evar_entitySchedule1
+		</css:ActionSets>
+		<css:Goal>cost</css:Goal>
+		<css:Result>
+		  Evar_entitySchedule
+		</css:Result>
+		<css:SelectedIndex>
+		  Svar_selectedSetIndex
+		</css:SelectedIndex>
+	  </css:ChooseActionSet>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="Svar_selectedSetIndex" sfn:result="Svar_key2" />
+	  <xfn:GetInMemoryObject xfn:key="Svar_key2" xfn:result="Svar_mod_schedule"/>
+	  <xfn:SetInMemoryObject xfn:key="Svar_key" xfn:value="Svar_mod_schedule" xfn:result="Svar_dummy10"/>
+	</xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='GenAction1' xet:priority='1'>
+    <xet:Head>
+	  <GenerateAction1>
+	    <T>Svar_t</T>
+		<Entity>Svar_EntityID</Entity>
+		<ReducedComfort>Svar_reducedComfort</ReducedComfort>
+		<UnacceptableComfort>Svar_unacceptable</UnacceptableComfort>
+		<Power>Svar_power</Power>
+		<PhyscialSpec>
+  	      <length>Svar_rlength</length>
+  	      <width>Svar_rwidth</width>
+  	      <height>Svar_rheight</height>
+  	    </PhyscialSpec>
+		<Result>Svar_cost_result</Result>
+	  </GenerateAction1> 
+	</xet:Head>
+	<xet:Body>
+	  <xfn:Subtract xfn:number1="Svar_t" xfn:number2="1" xfn:result="Svar_tMin1" />
+	  <sfn:ConcatString sfn:string1="Svar_EntityID" sfn:string2="extendedSchedule" sfn:result="Svar_key" />
+	  <xfn:GetInMemoryObject xfn:key="Svar_key" xfn:result="Svar_current_schedule"/>
+	  <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+	  <xfn:Add xfn:number1="Svar_t" xfn:number2="3" xfn:result="Svar_tSch"/>
+	  <xfn:Add xfn:number1="Svar_tMin1" xfn:number2="3" xfn:result="Svar_tMin1Sch"/>
+	  <css:GetArrayData css:array="Svar_current_schedule" css:index="Svar_tSch" css:result="Svar_plan_t"/>
+	  <css:GetArrayData css:array="Svar_current_schedule" css:index="Svar_tMin1Sch" css:result="Svar_plan_tMin1"/>
+	  <css:GetRemoteData css:provider="WEATHER" css:operation="getActualTemp" css:param1="time" css:param2="day" css:param3="month" css:param4="year" 
+	    css:param1_val="Svar_t" css:param2_val="Svar_curDay" css:param3_val="Svar_curMonth" css:param4_val="Svar_curYear" css:return_temp="Svar_otemp"/>
+	  <css:InvokeFunction css:class="no.ntnu.item.smash.css.em.EnergyManagement" css:function="estimatedTempDrop" css:param1="otemp" 
+	    css:param2="rtemp" css:param3="roomW" css:param4="roomL" css:param5="roomH" css:param6="duration" css:param1_val="Svar_otemp" css:param2_val="Svar_plan_tMin1" css:param3_val="Svar_rwidth"
+	    css:param4_val="Svar_rlength" css:param5_val="Svar_rheight" css:param6_val="3600" css:return="Svar_est_tempDrop"/>
+	  <xfn:Subtract xfn:number1="Svar_plan_tMin1" xfn:number2="Svar_plan_t" xfn:result="Svar_diff1"/>
+	  <xfn:Subtract xfn:number1="Svar_est_tempDrop" xfn:number2="Svar_diff1" xfn:result="Svar_toIncrease"/>
+	  <xfn:Add xfn:number1="Svar_plan_tMin1" xfn:number2="Svar_toIncrease" xfn:result="Svar_tMin1newSetpoint"/>
+	  <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_t" css:min="0" css:result="Svar_t_dateString"/>
+	  <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_tMin1" css:min="0" css:result="Svar_tMin1_dateString"/>
+	  <!-- Calculate cost: COST COST for subaction 1 (heat up at t-1) -->
+	  <css:GetRemoteData css:provider="DSO" css:operation="getEstESPPrices" css:return_prices="Svar_ESP_prices" />
+	  <css:GetRemoteData css:provider="DSO" css:operation="getEstDSOPrices" css:return_prices="Svar_DSO_prices" />
+	  <css:GetArrayData css:array="Svar_ESP_prices" css:index="Svar_tMin1" css:result="Svar_ESPprice_tMin1" />
+	  <css:GetArrayData css:array="Svar_DSO_prices" css:index="Svar_tMin1" css:result="Svar_DSOprice_tMin1" />
+	  <xfn:Add xfn:number1="Svar_ESPprice_tMin1" xfn:number2="Svar_DSOprice_tMin1" xfn:result="Svar_price_tMin1" />
+	  <css:InvokeFunction css:class="no.ntnu.item.smash.css.em.EnergyManagement" css:function="estimatedEnergy" css:param1="otemp" css:param2="rtemp" css:param3="deltaT" css:param4="roomW" 
+	    css:param5="roomL" css:param6="roomH" css:param7="watt" css:param1_val="Svar_otemp" css:param2_val="Svar_plan_tMin1" css:param3_val="Svar_toIncrease" css:param4_val="Svar_rwidth" 
+	    css:param5_val="Svar_rlength" css:param6_val="Svar_rheight" css:param7_val="Svar_power" css:return="Svar_estEnergy" />
+	  <xfn:Multiply xfn:number1="Svar_estEnergy" xfn:number2="Svar_price_tMin1" xfn:result="Svar_cost_cost1" />
+	  <!-- Calculate cost: COST COST for subaction 2 (turn off heating) -->
+	  <CalculateCostTurnOffHeat>
+	    <Entity>Svar_EntityID</Entity>
+	    <T>Svar_t</T>
+	    <PlanT>Svar_plan_t</PlanT>
+		<PlanTMin1>Svar_plan_tMin1</PlanTMin1>
+		<OTemp>Svar_otemp</OTemp>
+		<DSOPrices>Svar_DSO_prices</DSOPrices>
+		<ESPPrices>Svar_ESP_prices</ESPPrices>
+		<Power>Svar_power</Power>
+		<PhyscialSpec>
+  	      <length>Svar_rlength</length>
+  	      <width>Svar_rwidth</width>
+  	      <height>Svar_rheight</height>
+  	    </PhyscialSpec>
+		<Result>Svar_cost_result</Result>
+	  </CalculateCostTurnOffHeat>
+	  <xfn:Add xfn:number1="0" xfn:number2="Svar_cost_result" xfn:result="Svar_cost_cost2" />
+	  <!-- Compute the new schedule that would be the result of the action -->
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="1" sfn:result="Svar_key2" />
+	  <css:SetArrayData css:array="Svar_current_schedule" css:index="Svar_tMin1Sch" css:value="Svar_tMin1newSetpoint" css:result="Svar_schedule2" />
+	  <xfn:SetInMemoryObject xfn:key="Svar_key2" xfn:value="Svar_schedule2" xfn:result="Svar_dummy10" />
+	</xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='SavingCalculation1' xet:priority='1'>
+    <xet:Head>
+	  <CalculateCostTurnOffHeat>
+	    <Entity>Svar_EntityID</Entity>
+	    <T>Svar_t</T>
+	    <PlanT>Svar_plan_t</PlanT>
+		<PlanTMin1>Svar_plan_tMin1</PlanTMin1>
+		<OTemp>Svar_otemp</OTemp>
+		<DSOPrices>Svar_DSO_prices</DSOPrices>
+		<ESPPrices>Svar_ESP_prices</ESPPrices>
+		<Power>Svar_power</Power>
+		<PhyscialSpec>
+  	      <length>Svar_rlength</length>
+  	      <width>Svar_rwidth</width>
+  	      <height>Svar_rheight</height>
+  	    </PhyscialSpec>
+		<Result>Svar_cost_result</Result>
+	  </CalculateCostTurnOffHeat>
+	</xet:Head>
+	<xet:Condition>
+	  <xfn:NumberEqual xfn:number1="Svar_plan_tMin1" xfn:number2="Svar_plan_t" />
+	</xet:Condition>
+	<xet:Body>
+	  <xet:ExecutionSequence>
+	    <css:GetRemoteData css:provider="SIMENV" css:operation="estimatedEnergyToMaintain" css:param1="temp" css:param2="otemp" css:param3="entity"
+	      css:param1_val="Svar_plan_t" css:param2_val="Svar_otemp" css:param3_val="Svar_EntityID" css:return_energy="Svar_estMaintain"/>
+	    <css:GetArrayData css:array="Svar_DSO_prices" css:index="Svar_t" css:result="Svar_DSOprice_t" />
+		<css:GetArrayData css:array="Svar_ESP_prices" css:index="Svar_t" css:result="Svar_ESPprice_t" />
+		<xfn:Add xfn:number1="Svar_DSOprice_t" xfn:number2="Svar_ESPprice_t" xfn:result="Svar_price_t" />
+	    <xfn:Multiply xfn:number1="Svar_estMaintain" xfn:number2="Svar_price_t" xfn:result="Svar_cost_cost2p" />
+	    <xfn:Subtract xfn:number1="0" xfn:number2="Svar_cost_cost2p" xfn:result="Svar_cost_result" />
+	  </xet:ExecutionSequence>
+	</xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='SavingCalculation2' xet:priority='2'>
+    <xet:Head>
+	  <CalculateCostTurnOffHeat>
+	    <Entity>Svar_EntityID</Entity>
+	    <T>Svar_t</T>
+	    <PlanT>Svar_plan_t</PlanT>
+		<PlanTMin1>Svar_plan_tMin1</PlanTMin1>
+		<OTemp>Svar_otemp</OTemp>
+		<DSOPrices>Svar_DSO_prices</DSOPrices>
+		<ESPPrices>Svar_ESP_prices</ESPPrices>
+		<Power>Svar_power</Power>
+		<PhyscialSpec>
+  	      <length>Svar_rlength</length>
+  	      <width>Svar_rwidth</width>
+  	      <height>Svar_rheight</height>
+  	    </PhyscialSpec>
+		<Result>Svar_cost_result</Result>
+	  </CalculateCostTurnOffHeat>
+	</xet:Head>
+	<xet:Condition>
+	  <xfn:LessThan xfn:number1="Svar_plan_tMin1" xfn:number2="Svar_plan_t" />
+	</xet:Condition>
+	<xet:Body>
+	  <xet:ExecutionSequence>
+	    <xfn:Subtract xfn:number1="Svar_plan_t" xfn:number2="Svar_plan_tMin1" xfn:result="Svar_toIncrease" />
+	    <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+		<css:InvokeFunction css:class="no.ntnu.item.smash.css.em.EnergyManagement" css:function="estimatedEnergy" css:param1="otemp" css:param2="rtemp" css:param3="deltaT" 
+	      css:param4="roomW" css:param5="roomL" css:param6="roomH" css:param7="watt" css:param1_val="Svar_otemp" css:param2_val="Svar_plan_tMin1" css:param3_val="Svar_toIncrease" css:param4_val="Svar_rwidth" css:param5_val="Svar_rlength" css:param6_val="Svar_rheight" css:param7_val="Svar_power" css:return="Svar_estEnergy" />
+	    <css:InvokeFunction css:class="no.ntnu.item.smash.css.em.EnergyManagement" css:function="estimatedHeatTime" css:param1="otemp" css:param2="rtemp" css:param3="deltaT" 
+	      css:param4="roomW" css:param5="roomL" css:param6="roomH" css:param7="watt" css:param1_val="Svar_otemp" css:param2_val="Svar_plan_tMin1" css:param3_val="Svar_toIncrease" css:param4_val="Svar_rwidth" css:param5_val="Svar_rlength" css:param6_val="Svar_rheight" css:param7_val="Svar_power" css:return="Svar_estHeatTime" />
+	    <css:GetArrayData css:array="Svar_DSO_prices" css:index="Svar_t" css:result="Svar_DSOprice_t" />
+		<css:GetArrayData css:array="Svar_ESP_prices" css:index="Svar_t" css:result="Svar_ESPprice_t" />
+		<xfn:Add xfn:number1="Svar_DSOprice_t" xfn:number2="Svar_ESPprice_t" xfn:result="Svar_price_t" />
+	    <xfn:Multiply xfn:number1="Svar_estEnergy" xfn:number2="Svar_price_t" xfn:result="Svar_cost_heatUp" />
+	    <xfn:Subtract xfn:number1="3600" xfn:number2="Svar_estHeatTime" xfn:result="Svar_maintainTime" />
+	    <css:GetRemoteData css:provider="SIMENV" css:operation="estimatedEnergyToMaintain" css:param1="temp" css:param2="otemp" css:param3="entity"
+          css:param1_val="Svar_plan_t" css:param2_val="Svar_otemp" css:param3_val="Svar_EntityID" css:return_energy="Svar_estMaintain"/>
+	    <xfn:Maximum xfn:number1="Svar_maintainTime" xfn:number2="0" xfn:result="Svar_mt" />
+	    <xfn:Divide xfn:number1="Svar_mt" xfn:number2="3600" xfn:result="Svar_mtFract" />
+	    <xfn:Multiply xfn:number1="Svar_mtFract" xfn:number2="Svar_estMaintain" xfn:result="Svar_estPartMaintain" />
+	    <xfn:Multiply xfn:number1="Svar_estPartMaintain" xfn:number2="Svar_price_t" xfn:result="Svar_cost_m" />
+	    <xfn:Add xfn:number1="Svar_cost_heatUp" xfn:number2="Svar_cost_m" xfn:result="Svar_cost_cost2p" />
+	    <xfn:Subtract xfn:number1="0" xfn:number2="Svar_cost_cost2p" result="Svar_cost_result" />
+	  </xet:ExecutionSequence>
+	</xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='SavingCalculation3' xet:priority='3'>
+    <xet:Head>
+	  <CalculateCostTurnOffHeat>
+	    <Entity>Svar_EntityID</Entity>
+	    <T>Svar_t</T>
+	    <PlanT>Svar_plan_t</PlanT>
+		<PlanTMin1>Svar_plan_tMin1</PlanTMin1>
+		<OTemp>Svar_otemp</OTemp>
+		<DSOPrices>Svar_DSO_prices</DSOPrices>
+		<ESPPrices>Svar_ESP_prices</ESPPrices>
+		<Power>Svar_power</Power>
+		<PhyscialSpec>
+  	      <length>Svar_rlength</length>
+  	      <width>Svar_rwidth</width>
+  	      <height>Svar_rheight</height>
+  	    </PhyscialSpec>
+		<Result>Svar_cost_result</Result>
+	  </CalculateCostTurnOffHeat>
+	</xet:Head>
+	<xet:Condition>
+	  <xfn:GreaterThan xfn:number1="Svar_plan_tMin1" xfn:number2="Svar_plan_t" />
+	</xet:Condition>
+	<xet:Body>
+	  <xet:ExecutionSequence>
+	    <xfn:Subtract xfn:number1="Svar_plan_tMin1" xfn:number2="Svar_plan_t" xfn:result="Svar_toCoolDown" />
+	    <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+	    <css:GetArrayData css:array="Svar_DSO_prices" css:index="Svar_t" css:result="Svar_DSOprice_t" />
+		<css:GetArrayData css:array="Svar_ESP_prices" css:index="Svar_t" css:result="Svar_ESPprice_t" />
+		<xfn:Add xfn:number1="Svar_DSOprice_t" xfn:number2="Svar_ESPprice_t" xfn:result="Svar_price_t" />
+	    <css:InvokeFunction css:class="no.ntnu.item.smash.css.em.EnergyManagement" css:function="estimatedTempDropTime" css:param1="otemp" css:param2="rtemp" css:param3="deltaT"
+		  css:param4="roomW" css:param5="roomL" css:param6="roomH" css:param1_val="Svar_otemp" css:param2_val="Svar_plan_tMin1" css:param3_val="Svar_toCoolDown" css:param4_val="Svar_rwidth" 
+		  css:param5_val="Svar_rlength" css:param6_val="Svar_rheight" css:return="Svar_estTempDropTime" />
+	    <css:GetRemoteData css:provider="SIMENV" css:operation="estimatedEnergyToMaintain" css:param1="temp" css:param2="otemp" css:param3="entity"
+	      css:param1_val="Svar_plan_t" css:param2_val="Svar_otemp" css:param3_val="Svar_EntityID" css:return_energy="Svar_estMaintain"/>
+	    <xfn:Subtract xfn:number1="3600" xfn:number2="Svar_estTempDropTime" xfn:result="Svar_maintainTime" />
+	    <xfn:Maximum xfn:number1="Svar_maintainTime" xfn:number2="0" xfn:result="Svar_mt" />
+	    <xfn:Divide xfn:number1="Svar_mt" xfn:number2="3600" xfn:result="Svar_mtFract" />
+	    <xfn:Multiply xfn:number1="Svar_mtFract" xfn:number2="Svar_estMaintain" xfn:result="Svar_estPartMaintain" />
+	    <xfn:Multiply xfn:number1="Svar_estPartMaintain" xfn:number2="Svar_price_t" xfn:result="Svar_cost_cost2p" />
+	    <xfn:Subtract xfn:number1="0" xfn:number2="Svar_cost_cost2p" result="Svar_cost_result" />
+	  </xet:ExecutionSequence>
+	</xet:Body>
+  </xet:Rule>
+</xet:XET>

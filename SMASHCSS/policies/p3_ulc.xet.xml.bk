@@ -1,0 +1,195 @@
+<xet:XET xmlns:xet="http://xet.sf.net" xmlns:xfn="http://tapas.item.ntnu.no/NxET/built-in/corefunctions" 
+	     xmlns:tfn="http://tapas.item.ntnu.no/NxET/built-in/time"
+		 xmlns:css="http://smash.item.ntnu.no/NxET/built-in"
+         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:smash="http://smash.item.ntnu.no#">
+  <xet:Meta>
+    <xet:SpecificationVersion>0.1</xet:SpecificationVersion>
+  </xet:Meta>
+  <xet:Data>datasources.xet.xml</xet:Data>
+  <xet:Rule xet:name='ComplyOrReject' xet:priority='1'>
+    <xet:Head>
+      <smash:Actions smash:setNumber="Svar_sn">
+	      Evar_entities
+	  </smash:Actions>
+    </xet:Head>
+    <xet:Body> <!-- Action set #1: comply -->
+	  <xfn:Add xfn:number1="0" xfn:number2="2" xfn:result="Svar_sn"/>
+      <xfn:SetOf xfn:mode='Set'>
+        <xfn:Set>Evar_differences</xfn:Set>
+        <xfn:Constructor>
+		  <xfn:Map>
+	        <xfn:Key>Svar_EntityID</xfn:Key>
+	        <xfn:Value>Svar_gap</xfn:Value>
+	      </xfn:Map>
+        </xfn:Constructor>
+        <xfn:Condition>
+          <CheckSpec/>  
+		</xfn:Condition>
+      </xfn:SetOf>
+	  <css:SortMap xfn:mode='Set'>
+	    <css:Map>Evar_differences</css:Map>
+		<css:Order>descend</css:Order>
+		<css:Result>Evar_sortedMap</css:Result>
+	  </css:SortMap>
+	  <xfn:DirectInput xfn:name="powerToReduce" xfn:result="Svar_request"/>
+	  <xfn:DirectInput xfn:name="id" xfn:result="Svar_reqID"/>
+	  <xfn:SetInMemoryObject xfn:key="requestPowerReduction" xfn:value="Svar_request" xfn:result="Svar_dummy1"/>	  
+	  <xfn:SetOf xfn:mode='Set'>
+        <xfn:Set>Evar_entities</xfn:Set>
+        <xfn:Constructor>
+		  <smash:ActionSet smash:set="1" smash:key1="Svar_reqID" smash:key2="1">
+		    <smash:Action smash:type="RoomSchedulingAction">
+		      <smash:Entity>Svar_EntityID</smash:Entity>
+			  <smash:start>Svar_startTime</smash:start>
+	          <smash:duration>Svar_duration</smash:duration>
+	          <smash:newTemp>-9999</smash:newTemp>
+	          <smash:cost smash:cost_cost="Svar_cost_cost" smash:cost_comfort="Svar_cost_comfort"/>
+		  </smash:Action>
+		  </smash:ActionSet>
+        </xfn:Constructor>
+        <xfn:Condition>
+          <ChooseEntity>Evar_sortedMap</ChooseEntity>
+		</xfn:Condition>
+      </xfn:SetOf>    
+    </xet:Body>
+    <xet:Body> <!-- Action set #2: reject -->
+	  <xfn:Add xfn:number1="0" xfn:number2="2" xfn:result="Svar_sn"/>
+      <xfn:DirectInput xfn:name="freedom" xfn:result="Svar_freedom"/>
+	  <xfn:Not><xfn:StringEqual xfn:string1="none" xfn:string2="Svar_freedom"/></xfn:Not>
+      <css:GetRemoteData css:provider="DSO" css:operation="getEstAvgElectricityPrice" css:return_price="Svar_avg_price"/>
+	  <css:GetRemoteData css:provider="WEATHER" css:operation="getAvgTemp" css:return_temp="Svar_avg_temp"/>
+	  <css:GetRemoteData css:provider="SIMENV" css:operation="getEstDailyEnergyConsumption" css:param1="otemp" css:param1_val="Svar_avg_temp" 
+	  css:param2="comfort" css:param2_val="2" css:return_kwh="Svar_est_kwh"/>
+	  <xfn:DirectInput xfn:name="timeToReduce" xfn:result="Svar_duration"/>
+	  <xfn:Divide xfn:number1="Svar_duration" xfn:number2="60" xfn:result="Svar_duration_hour"/>
+	  <xfn:Multiply xfn:number1="4" xfn:number2="Svar_duration_hour" xfn:result="Svar_penalty"/>
+	  <xfn:Multiply xfn:number1="Svar_avg_price" xfn:number2="Svar_est_kwh" xfn:result="Svar_est_cost"/>
+	  <xfn:Add xfn:number1="Svar_est_cost" xfn:number2="Svar_penalty" xfn:result="Svar_est_dailycost"/>
+	  <!-- Constraint: BUDGET: estimated daily cost < daily budget -->
+	  <xfn:GreaterThan xfn:number1="30" xfn:number2="Svar_est_dailycost"/>
+      <xfn:SetOf xfn:mode='Set'>
+        <xfn:Set>Evar_entities</xfn:Set>
+        <xfn:Constructor>
+		  <smash:ActionSet smash:set="2" smash:key1="Svar_reqID" smash:key2="1">
+		    <smash:Action smash:type="ULCRejectionAction">
+		      <smash:id>Svar_reqID</smash:id>
+			  <smash:penalty>Svar_cost_cost</smash:penalty>
+			  <smash:cost smash:cost_cost="Svar_cost_cost" smash:cost_comfort="Svar_cost_comfort"/>
+		    </smash:Action>
+		  </smash:ActionSet>
+        </xfn:Constructor>
+        <xfn:Condition>
+          <ConstructRejectAction/>  
+		</xfn:Condition>
+	  </xfn:SetOf>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='CheckSpecification' xet:priority='2'>
+    <xet:Head>
+      <CheckSpec/>
+    </xet:Head>
+    <xet:Body>
+	  <xfn:FactQuery xfn:uri='ds://Entity-Spec' xfn:mode='Set'>
+        <smash:Entity rdf:about='Svar_EntityID'>
+          <smash:PhyscialSpec>
+  	        <smash:length>Svar_rlength</smash:length>
+  	        <smash:width>Svar_rwidth</smash:width>
+  	        <smash:height>Svar_rheight</smash:height>
+  	      </smash:PhyscialSpec>
+		  <smash:ComfortSpec>
+		    <smash:reducedComfort>Svar_reducedComfort</smash:reducedComfort>
+			<smash:unacceptableComfort>Svar_unacceptable</smash:unacceptableComfort>
+		  </smash:ComfortSpec>
+        </smash:Entity>
+      </xfn:FactQuery>
+      <xfn:DirectInput xfn:name="startTime" xfn:result="Svar_start"/>
+      <xfn:Subtract xfn:number1="Svar_start" xfn:number2="1" xfn:result="Svar_beforeControl"/>
+	  <css:GetRemoteData css:provider="SIMENV" css:operation="getPlannedTempAtTime" css:param1="room" css:param2="time" css:param1_val="Svar_EntityID" 
+	    css:param2_val="Svar_beforeControl" css:return_plannedTemp="Svar_Data_temp"/> 
+	  <xfn:Subtract xfn:number1="Svar_Data_temp" xfn:number2="Svar_unacceptable" xfn:result="Svar_gap"/>
+	  <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+	  <css:GetRemoteData css:provider="WEATHER" css:operation="getActualTemp" css:param1="time" css:param2="day" css:param3="month" css:param4="year" 
+	    css:param1_val="Svar_start" css:param2_val="Svar_curDay" css:param3_val="Svar_curMonth" css:param4_val="Svar_curYear" css:return_temp="Svar_otemp"/>
+	  <xfn:DirectInput xfn:name="timeToReduce" xfn:result="Svar_duration"/>
+	  <xfn:Multiply xfn:number1="Svar_duration" xfn:number2="60" xfn:result="Svar_duration_second"/>
+	  <css:InvokeFunction css:class="no.ntnu.item.smash.css.em.EnergyManagement" css:function="estimatedTempDrop" css:param1="otemp" 
+	    css:param2="rtemp" css:param3="roomW" css:param4="roomL" css:param5="roomH" css:param6="duration" css:param1_val="Svar_otemp" css:param2_val="Svar_Data_temp" css:param3_val="Svar_rwidth"
+	    css:param4_val="Svar_rlength" css:param5_val="Svar_rheight" css:param6_val="Svar_duration_second" css:return="Svar_est_tempDrop"/>
+	  <xfn:Subtract xfn:number1="Svar_Data_temp" xfn:number2="Svar_est_tempDrop" xfn:result="Svar_estimatedNewTemp"/>
+	  <!-- Constraint: WELL-BEING: estimated new temp > unacceptable temp -->
+	  <xfn:GreaterThan xfn:number1="Svar_estimatedNewTemp" xfn:number2="Svar_unacceptable" />
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='ChooseEntity' xet:priority='3'>
+	<xet:Head>
+	  <ChooseEntity>Evar_sortedMap</ChooseEntity>
+	</xet:Head>
+	<xet:Body>
+	  <xfn:LoopSet xfn:mode='Map'>
+	    <xfn:Maps>
+		  Evar_sortedMap
+		</xfn:Maps>
+		<xfn:Extract>
+		  <xfn:Map>
+		    <xfn:Key>Svar_EntityID</xfn:Key>
+		  </xfn:Map>
+		</xfn:Extract>
+	  </xfn:LoopSet>
+	  <xfn:FactQuery xfn:uri='ds://Entity-Spec' xfn:mode='Set'>
+        <smash:Entity rdf:about='Svar_EntityID'>
+          <smash:PhyscialSpec>
+  	        <smash:length>Svar_rlength</smash:length>
+  	        <smash:width>Svar_rwidth</smash:width>
+  	        <smash:height>Svar_rheight</smash:height>
+  	      </smash:PhyscialSpec>
+		  <smash:DeviceSpec>
+  	  	    <smash:power>Svar_power</smash:power>
+  	      </smash:DeviceSpec>
+        </smash:Entity>
+      </xfn:FactQuery>
+	  <xfn:GetInMemoryObject xfn:key="requestPowerReduction" xfn:result="Svar_powerToReduce"/>
+	  <xfn:GreaterThan xfn:number1="Svar_powerToReduce" xfn:number2="0"/>
+	  <xfn:Subtract xfn:number1="Svar_powerToReduce" xfn:number2="Svar_power" xfn:result="Svar_newPowerToReduce"/>
+	  <xfn:SetInMemoryObject xfn:key="requestPowerReduction" xfn:value="Svar_newPowerToReduce" xfn:result="Svar_dummy1"/>
+	  <xfn:DirectInput xfn:name="startTime" xfn:result="Svar_start"/>
+	  <css:ConstructTime css:year="" css:month="" css:day="" css:hour="Svar_start" css:min="0" css:result="Svar_startTime"/>
+	  <xfn:DirectInput xfn:name="timeToReduce" xfn:result="Svar_duration"/>
+	  <xfn:Multiply xfn:number1="Svar_duration" xfn:number2="60" xfn:result="Svar_duration_second"/>
+	  <!-- Calculate cost: COST COST -->
+	  <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+	  <css:GetRemoteData css:provider="WEATHER" css:operation="getActualTemp" css:param1="time" css:param2="day" css:param3="month" css:param4="year" 
+	    css:param1_val="Svar_start" css:param2_val="Svar_curDay" css:param3_val="Svar_curMonth" css:param4_val="Svar_curYear" css:return_temp="Svar_otemp"/>
+	  <xfn:Subtract xfn:number1="Svar_start" xfn:number2="1" xfn:result="Svar_beforeControl"/>
+	  <css:GetRemoteData css:provider="SIMENV" css:operation="getPlannedTempAtTime" css:param1="room" css:param2="time" css:param1_val="Svar_EntityID" 
+	    css:param2_val="Svar_beforeControl" css:return_plannedTemp="Svar_Data_temp"/>
+	  <css:GetRemoteData css:provider="SIMENV" css:operation="estimatedEnergyToMaintain" css:param1="temp" css:param2="otemp"
+	    css:param1_val="Svar_Data_temp" css:param2_val="Svar_otemp" css:return_energy="Svar_estMaintain1"/>
+	  <xfn:Multiply xfn:number1="Svar_estMaintain1" xfn:number2="-1" xfn:result="Svar_estMaintain" />
+	  <css:GetRemoteData css:provider="DSO" css:operation="getEstESPPrice" css:param1="time" css:param2="day" css:param3="month" css:param4="year"
+	    css:param1_val="Svar_start" css:param2_val="Svar_curDay" css:param3_val="Svar_curMonth" css:param4_val="Svar_curYear" css:return_price="Svar_ESP_price"/>
+	  <css:GetRemoteData css:provider="DSO" css:operation="getActDSOPrice" css:param1="time" css:param2="day" css:param3="month" css:param4="year"
+	    css:param1_val="Svar_start" css:param2_val="Svar_curDay" css:param3_val="Svar_curMonth" css:param4_val="Svar_curYear" css:return_price="Svar_DSO_price"/>
+	  <xfn:Add xfn:number1="Svar_ESP_price" xfn:number2="Svar_DSO_price" xfn:result="Svar_elecPrice" />
+	  <xfn:Multiply xfn:number1="Svar_estMaintain" xfn:number2="Svar_elecPrice" xfn:result="Svar_cost_cost" />
+	  <!-- Calculate cost: COMFORT COST -->
+	  <css:InvokeFunction css:class="no.ntnu.item.smash.css.em.EnergyManagement" css:function="estimatedTempDrop" css:param1="otemp" 
+	    css:param2="rtemp" css:param3="roomW" css:param4="roomL" css:param5="roomH" css:param6="duration" css:param1_val="Svar_otemp" css:param2_val="Svar_Data_temp" css:param3_val="Svar_rwidth"
+	    css:param4_val="Svar_rlength" css:param5_val="Svar_rheight" css:param6_val="Svar_duration_second" css:return="Svar_cost_comfort"/>
+	</xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="ConstructReject" xet:priority="3">
+    <xet:Head>
+	  <ConstructRejectAction/>
+	</xet:Head>
+	<xet:Body>
+	  <xfn:DirectInput xfn:name="id" xfn:result="Svar_reqID"/>
+	  <!--  Calculate cost: COST COST -->
+	  <xfn:DirectInput xfn:name="timeToReduce" xfn:result="Svar_duration"/>
+	  <xfn:Divide xfn:number1="Svar_duration" xfn:number2="60" xfn:result="Svar_duration_hour"/>
+	  <xfn:Multiply xfn:number1="4" xfn:number2="Svar_duration_hour" xfn:result="Svar_cost_cost" />
+	  <!--  Calculate cost: COMFORT COST -->
+	  <xfn:AssignString xfn:variable="Svar_cost_comfort" xfn:value="0" />
+	</xet:Body>
+  </xet:Rule>
+</xet:XET>

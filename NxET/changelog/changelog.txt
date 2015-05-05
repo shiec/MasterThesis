@@ -1,0 +1,9 @@
+CHANGE LOG
+-----------
+
+This file lists the changes made to the NxET codebase. Some changes were already made earlier without any record.
+This list records changes made from 13.11.2013.
+
+13.11.2013
+- Executor.java line 1008 > execResult.merge(headSpec);
+  Merge the empty specialization with the previous specialization sent as the parameter

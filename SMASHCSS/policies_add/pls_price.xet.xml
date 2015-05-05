@@ -1,0 +1,316 @@
+<xet:XET xmlns:xet="http://xet.sf.net" xmlns:xfn="http://tapas.item.ntnu.no/NxET/built-in/corefunctions" 
+		 xmlns:sfn="http://tapas.item.ntnu.no/NxET/built-in/string"
+	     xmlns:tfn="http://tapas.item.ntnu.no/NxET/built-in/time"
+		 xmlns:css="http://smash.item.ntnu.no/NxET/built-in"
+         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:smash="http://smash.item.ntnu.no#">
+  <xet:Meta>
+    <xet:SpecificationVersion>0.1</xet:SpecificationVersion>
+  </xet:Meta>
+  <xet:Data>datasources.xet.xml</xet:Data>
+  <xet:Rule xet:name='ConstructSet' xet:priority='1'>
+    <xet:Head>
+      <smash:Actions smash:setNumber="Svar_sn">
+	      Evar_entities
+	  </smash:Actions>
+    </xet:Head>
+    <xet:Body>
+      <xfn:SetOf xfn:mode='Set'>
+        <xfn:Set>Evar_entities</xfn:Set>
+        <xfn:Constructor>
+		  Evar_entitySchedule
+        </xfn:Constructor>
+        <xfn:Condition>
+          <CheckSpecification/>  
+		</xfn:Condition>
+      </xfn:SetOf>
+	  <xfn:Add xfn:number1="0" xfn:number2="3" xfn:result="Svar_sn" />
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='CheckSpecification' xet:priority='1'>
+    <xet:Head>
+	  <CheckSpecification/>
+	</xet:Head>
+	<xet:Body>
+	  <css:GetRemoteData css:provider="DSO" css:operation="getEstElectricityPrices" css:return_prices="Svar_Data_prices"/>
+	  <xfn:SetOf xfn:mode='Set'>
+        <xfn:Set>Evar_highPriceHours</xfn:Set>
+        <xfn:Constructor>
+		  <xfn:Map>
+	        <xfn:Key>Svar_atHour</xfn:Key>
+	        <xfn:Value>Svar_hourlyPrice</xfn:Value>
+	      </xfn:Map>
+        </xfn:Constructor>
+        <xfn:Condition>
+          <CheckPrice>
+	        <PriceArray>Svar_Data_prices</PriceArray>
+	      </CheckPrice>  
+		</xfn:Condition>
+      </xfn:SetOf>
+	  <css:SortMap xfn:mode='Set'>
+	    <css:Map>Evar_highPriceHours</css:Map>
+		<css:Order>descend</css:Order>
+		<css:Result>Evar_sortedMap</css:Result>
+	  </css:SortMap>
+	  <CheckEntities>Evar_sortedMap</CheckEntities>
+	</xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='CheckPrice' xet:priority='1'>
+    <xet:Head>
+	  <CheckPrice>
+	    <PriceArray>Svar_Data_prices</PriceArray>
+	  </CheckPrice>
+	</xet:Head>
+	<xet:Body>
+	  <xfn:FactQuery xfn:uri='ds://Hour-in-day' xfn:mode='Set'>
+        <hour>Svar_atHour</hour>
+      </xfn:FactQuery>
+	  <xfn:GreaterThan xfn:number1="Svar_atHour" xfn:number2="0" />
+	  <css:GetArrayData css:array="Svar_Data_prices" css:index="Svar_atHour" css:result="Svar_hourlyPrice"/>
+	  <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+	  <css:GetRemoteData css:provider="SIMENV" css:operation="estimateHighElectricityPriceCeiling" css:param1="day" css:param2="month" css:param3="year"
+	    css:param1_val="Svar_curDay" css:param2_val="Svar_curMonth" css:param3_val="Svar_curYear" css:return_price="Svar_ceiling"/>
+	  <xfn:GreaterThan xfn:number1="Svar_hourlyPrice" xfn:number2="Svar_ceiling"/><!-- was 1.6 at number2 -->
+	</xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='CheckEntities' xet:priority='1'>
+    <xet:Head>
+	  <CheckEntities>Evar_highPricedHours</CheckEntities>
+	</xet:Head>
+	<xet:Body>
+	  <xfn:FactQuery xfn:uri='ds://Entity-Spec' xfn:mode='Set'>
+        <smash:Entity rdf:about='Svar_EntityID'>
+          <smash:PhyscialSpec>
+  	        <smash:length>Svar_rlength</smash:length>
+  	        <smash:width>Svar_rwidth</smash:width>
+  	      </smash:PhyscialSpec>
+          <smash:LightingSpec>
+	        <smash:utilizationFactor>Svar_utilizationFactor</smash:utilizationFactor>
+	        <smash:lightLossFactor>Svar_lightLossFactor</smash:lightLossFactor>
+	        <smash:illuminanceReduced>Svar_illuminanceReduced</smash:illuminanceReduced>
+	        <smash:illuminanceLimit>Svar_illuminanceLimit</smash:illuminanceLimit>
+	      </smash:LightingSpec>
+        </smash:Entity>
+      </xfn:FactQuery>
+      <xfn:SetOf xfn:mode='Set'>
+        <xfn:Set>Evar_lights</xfn:Set>
+        <xfn:Constructor>
+		  <xfn:Map>
+	        <xfn:Key>Svar_LightID</xfn:Key>
+	        <xfn:Value>Svar_lumen</xfn:Value>
+	      </xfn:Map>
+        </xfn:Constructor>
+        <xfn:Condition>
+          <CheckLights>Svar_EntityID</CheckLights>
+		</xfn:Condition>
+      </xfn:SetOf>
+      <css:SortMap xfn:mode='Set'>
+	    <css:Map>Evar_lights</css:Map>
+		<css:Order>descend</css:Order>
+		<css:Result>Evar_sortedLights</css:Result>
+	  </css:SortMap>
+      <xfn:Multiply xfn:number1="Svar_rlength" xfn:number2="Svar_rwidth" xfn:result="Svar_ceilingArea"/>
+      <xfn:Multiply xfn:number1="Svar_ceilingArea" xfn:number2="Svar_illuminanceReduced" xfn:result="Svar_lumenReduced"/>
+      <xfn:Multiply xfn:number1="Svar_ceilingArea" xfn:number2="Svar_illuminanceLimit" xfn:result="Svar_lumenMin"/>
+      <xfn:Multiply xfn:number1="Svar_utilizationFactor" xfn:number2="Svar_lightLossFactor" xfn:result="Svar_factor"/>
+      <css:GetRemoteData css:provider="SIMENV" css:operation="getRoomStatistics" css:param1="room" css:param1_val="Svar_EntityID" 
+        css:return_number="Svar_number" css:return_totalLumen="Svar_totalLumen" css:return_lightSchedule="Svar_lightSchedule"/>
+      <sfn:ConcatString sfn:string1="Svar_EntityID" sfn:string2="lightSchedule" sfn:result="Svar_key"/>	
+	  <xfn:SetInMemoryObject xfn:key="Svar_key" xfn:value="Svar_lightSchedule" xfn:result="Svar_dummy"/>
+	  <xfn:Divide xfn:number1="Svar_lumenReduced" xfn:number2="Svar_factor" xfn:result="Svar_totalLumenReduced"/>
+	  <xfn:Divide xfn:number1="Svar_lumenMin" xfn:number2="Svar_factor" xfn:result="Svar_totalLumenMin"/>
+	  <xfn:Subtract xfn:number1="Svar_totalLumen" xfn:number2="Svar_totalLumenReduced" xfn:result="Svar_reducedLumen"/>
+      <xfn:Subtract xfn:number1="Svar_totalLumen" xfn:number2="Svar_totalLumenMin" xfn:result="Svar_reducedLumenMax"/>
+	  <xfn:LoopSet xfn:mode='Map'>
+	    <xfn:Maps>
+		  Evar_highPricedHours
+		</xfn:Maps>
+		<xfn:Extract>
+		  <xfn:Map>
+		    <xfn:Key>Svar_t</xfn:Key>
+		  </xfn:Map>
+		</xfn:Extract>
+	  </xfn:LoopSet>
+	  <xfn:Multiply xfn:number1="Svar_t" xfn:number2="12" xfn:result="Svar_extendedT"/>
+	  <css:GetArrayData css:array="Svar_lightSchedule" css:index="Svar_extendedT" css:result="Svar_planAtT"/>
+	  <xfn:NumberEqual xfn:number1="Svar_planAtT" xfn:number2="1"/>
+	  <GenerateActions>
+	    <T>Svar_t</T>
+	    <Entity>Svar_EntityID</Entity>
+	    <Lights>Evar_sortedLights</Lights>
+	    <LumenReduced>Svar_reducedLumen</LumenReduced>
+	    <LumenMinimum>Svar_reducedLumenMax</LumenMinimum>
+	  </GenerateActions>
+    </xet:Body>
+  </xet:Rule>  
+  <xet:Rule xet:name='CheckLights' xet:priority='1'>
+    <xet:Head>
+      <CheckLights>Svar_EntityID</CheckLights>
+    </xet:Head>
+    <xet:Body>
+      <xfn:FactQuery xfn:uri='ds://Entity-Spec' xfn:mode='Set'>
+        <smash:Entity rdf:about='Svar_EntityID'>
+          <smash:Lights>
+  	        Evar_allLights
+  	      </smash:Lights>
+        </smash:Entity>
+      </xfn:FactQuery>
+      <xfn:LoopSet xfn:mode='Set'>
+	    <xfn:Set>
+		  Evar_allLights
+		</xfn:Set>
+		<xfn:Extract>
+		  <smash:Light rdf:about="Svar_LightID">
+			<smash:lumen>Svar_lumen</smash:lumen>
+		  </smash:Light>
+		</xfn:Extract>
+	  </xfn:LoopSet>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='GenActions1' xet:priority='1'>
+    <xet:Head>
+      <GenerateActions>
+	    <T>Svar_t</T>
+		<Entity>Svar_EntityID</Entity>
+		<Lights>Evar_lights</Lights>
+		<LumenReduced>Svar_reducedLumen</LumenReduced>
+		<LumenMinimum>Svar_reducedLumenMax</LumenMinimum>
+	  </GenerateActions>
+    </xet:Head>
+    <xet:Body> 
+      <xfn:SetOf xfn:mode='Set'>
+        <xfn:Set>Evar_entitySchedule1</xfn:Set>
+        <xfn:Constructor>
+		<smash:ActionSet smash:set="1" smash:key1="Svar_EntityID" smash:key2="Svar_t">
+		  <smash:Action smash:type="LightSchedulingAction">
+		    <smash:Entity>Svar_EntityID</smash:Entity>
+		    <smash:Light>Svar_LightID</smash:Light>
+			<smash:start>Svar_t_dateString</smash:start>
+	        <smash:duration>60</smash:duration>
+	        <smash:newStatus>Svar_status</smash:newStatus>
+	        <smash:cost smash:cost_cost="Svar_cost_cost" smash:cost_comfort="Svar_cost_comfort"/>
+		  </smash:Action>
+		</smash:ActionSet>
+        </xfn:Constructor>
+        <xfn:Condition>
+          <GenerateAction>
+		    <T>Svar_t</T>
+	  		<Entity>Svar_EntityID</Entity>
+	  		<Lights>Evar_lights</Lights>
+	  		<ReducedLumen>Svar_reducedLumen</ReducedLumen>
+		  </GenerateAction>
+		</xfn:Condition>
+      </xfn:SetOf>  
+      <xfn:SetOf xfn:mode='Set'>
+        <xfn:Set>Evar_entitySchedule2</xfn:Set>
+        <xfn:Constructor>
+		<smash:ActionSet smash:set="2" smash:key1="Svar_EntityID" smash:key2="Svar_t">
+		  <smash:Action smash:type="LightSchedulingAction">
+		    <smash:Entity>Svar_EntityID</smash:Entity>
+		    <smash:Light>Svar_LightID</smash:Light>
+			<smash:start>Svar_t_dateString</smash:start>
+	        <smash:duration>60</smash:duration>
+	        <smash:newStatus>Svar_status</smash:newStatus>
+	        <smash:cost smash:cost_cost="Svar_cost_cost" smash:cost_comfort="Svar_cost_comfort"/>
+		  </smash:Action>
+		</smash:ActionSet>
+        </xfn:Constructor>
+        <xfn:Condition>
+          <GenerateAction>
+		    <T>Svar_t</T>
+	  		<Entity>Svar_EntityID</Entity>
+	  		<Lights>Evar_lights</Lights>
+	  		<ReducedLumen>Svar_reducedLumenMax</ReducedLumen>
+		  </GenerateAction>
+		</xfn:Condition>
+      </xfn:SetOf>
+      <css:ChooseActionSet>
+        <css:ActionSets>	
+		  Evar_entitySchedule1
+		
+		  Evar_entitySchedule2
+		</css:ActionSets>
+		<css:Goal>cost</css:Goal>
+		<css:Result>
+		  Evar_entitySchedule
+		</css:Result>
+		<css:SelectedIndex>
+		  Svar_selectedSetIndex
+		</css:SelectedIndex>
+      </css:ChooseActionSet>  
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='GenAction' xet:priority='1'>
+    <xet:Head>
+	  <GenerateAction>
+	    <T>Svar_t</T>
+	    <Entity>Svar_EntityID</Entity>
+	    <Lights>Evar_lights</Lights>
+	  	<ReducedLumen>Svar_reducedLumenLimit</ReducedLumen>
+	  </GenerateAction>
+	</xet:Head>
+	<xet:Body>
+	  <css:GetRemoteData css:provider="DSO" css:operation="getEstESPPrices" css:return_prices="Svar_ESP_prices" />
+	  <css:GetRemoteData css:provider="DSO" css:operation="getActDSOPrices" css:return_prices="Svar_DSO_prices" />
+	  <css:GetArrayData css:array="Svar_DSO_prices" css:index="Svar_t" css:result="Svar_DSOprice_t"/>
+	  <css:GetArrayData css:array="Svar_ESP_prices" css:index="Svar_t" css:result="Svar_ESPprice_t"/>
+	  <xfn:Add xfn:number1="Svar_DSOprice_t" xfn:number2="Svar_ESPprice_t" xfn:result="Svar_price_t"/>
+	  <sfn:ConcatString sfn:string1="tempLumen" sfn:string2="Svar_EntityID" sfn:result="Svar_lumenKey"/>	
+	  <xfn:SetInMemoryObject xfn:key="Svar_lumenKey" xfn:value="Svar_reducedLumenLimit" xfn:result="Svar_temp"/>
+	  <xfn:LoopSet xfn:mode='Map'>
+	    <xfn:Maps>
+		  Evar_lights
+		</xfn:Maps>
+		<xfn:Extract>
+		  <xfn:Map>
+		    <xfn:Key>Svar_LightID</xfn:Key>
+		    <xfn:Value>Svar_lumen</xfn:Value>
+		  </xfn:Map>
+		</xfn:Extract>
+	  </xfn:LoopSet>
+	  <xfn:GetInMemoryObject xfn:key="Svar_lumenKey" xfn:result="Svar_tempLumen"/>
+	  <xfn:LessThanOrEqual xfn:number1="Svar_lumen" xfn:number2="Svar_tempLumen"/>
+	  <CheckReducedLumen>
+	    <T>Svar_t</T>
+	    <Entity>Svar_EntityID</Entity>
+	    <Light>Svar_LightID</Light>
+	    <Lumen>Svar_lumen</Lumen>
+	    <Price>Svar_price_t</Price>
+	    <Limit>Svar_tempLumen</Limit>
+	  </CheckReducedLumen>
+	</xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='CheckLumen1' xet:priority='1'>
+  	<xet:Head>
+  	  <CheckReducedLumen>
+  	    <T>Svar_t</T>
+	    <Entity>Svar_EntityID</Entity>
+	    <Light>Svar_LightID</Light>
+	    <Lumen>Svar_lumen</Lumen>
+	    <Price>Svar_price_t</Price>
+	    <Limit>Svar_tempLumen</Limit>
+	  </CheckReducedLumen>
+  	</xet:Head>
+  	<xet:Body>
+  	  <xfn:Subtract xfn:number1="Svar_tempLumen" xfn:number2="Svar_lumen" xfn:result="Svar_lumenTemp"/>
+  	  <sfn:ConcatString sfn:string1="tempLumen" sfn:string2="Svar_EntityID" sfn:result="Svar_keyTemp1"/>	
+  	  <xfn:SetInMemoryObject xfn:key="Svar_keyTemp1" xfn:value="Svar_lumenTemp" xfn:result="Svar_dummy"/>
+	  <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+	  <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_t" css:min="0" css:result="Svar_t_dateString"/>
+	  <xfn:AssignString xfn:variable="Svar_status" xfn:value="0"/>
+	  <xfn:FactQuery xfn:uri='ds://Entity-Spec' xfn:mode='Set'>
+	  	<smash:Entity rdf:about="Svar_EntityID">
+	  	  <smash:Lights>
+  	        <smash:Light rdf:about="Svar_LightID">
+  	          <smash:power>Svar_power</smash:power>
+  	        </smash:Light>
+  	      </smash:Lights>
+  	    </smash:Entity>
+      </xfn:FactQuery>
+      <xfn:Multiply xfn:number1="Svar_power" xfn:number2="0.001" xfn:result="Svar_energy"/>
+	  <xfn:Multiply xfn:number1="Svar_energy" xfn:number2="Svar_price_t" xfn:result="Svar_cost_costTemp"/>
+	  <xfn:Subtract xfn:number1="0" xfn:number2="Svar_cost_costTemp" xfn:result="Svar_cost_cost"/>
+	  <xfn:AssignString xfn:variable="Svar_cost_comfort" xfn:value="Svar_lumen"/>
+  	</xet:Body>
+  </xet:Rule>
+</xet:XET>

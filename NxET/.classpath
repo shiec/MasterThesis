@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/commons-cli-1.0.jar"/>
+	<classpathentry kind="lib" path="lib/jep-2.3.0.jar"/>
+	<classpathentry kind="lib" path="lib/xfn-core.jar"/>
+	<classpathentry kind="lib" path="lib/xfn-custom.jar"/>
+	<classpathentry kind="lib" path="lib/xfn-string.jar"/>
+	<classpathentry kind="lib" path="lib/xfn-css.jar"/>
+	<classpathentry kind="lib" path="lib/xfn-time.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

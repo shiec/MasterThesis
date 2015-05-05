@@ -1,0 +1,1413 @@
+<xet:XET xmlns:xet="http://xet.sf.net" xmlns:xfn="http://tapas.item.ntnu.no/NxET/built-in/corefunctions" 
+		 xmlns:sfn="http://tapas.item.ntnu.no/NxET/built-in/string"
+	     xmlns:tfn="http://tapas.item.ntnu.no/NxET/built-in/time"
+		 xmlns:css="http://smash.item.ntnu.no/NxET/built-in"
+         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:smash="http://smash.item.ntnu.no#">
+  <xet:Meta>
+    <xet:SpecificationVersion>0.1</xet:SpecificationVersion>
+  </xet:Meta>
+  <xet:Data>datasources.xet.xml</xet:Data>
+  <xet:Rule xet:name='ConstructSet' xet:priority='1'>
+    <xet:Head>
+      <smash:Actions smash:setNumber="Svar_sn">
+	      Evar_entities
+	  </smash:Actions>
+    </xet:Head>
+    <xet:Body>
+    
+      <xfn:SetOf xfn:mode='Set'>
+        <xfn:Set>Evar_entities</xfn:Set>
+        <xfn:Constructor>
+		  Evar_entitySchedule
+        </xfn:Constructor>
+        <xfn:Condition>
+          <CheckSpecification/>  
+		</xfn:Condition>
+      </xfn:SetOf>
+	  <xfn:Add xfn:number1="0" xfn:number2="3" xfn:result="Svar_sn" />
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='CheckSpecification' xet:priority='1'>
+    <xet:Head>
+	  <CheckSpecification/>
+	</xet:Head>
+	<xet:Body>
+	  <xfn:FactQuery xfn:uri='ds://Entity-Spec' xfn:mode='Set'>
+        <smash:Entity rdf:about='Svar_EntityID'>
+		  <smash:WashingMachine rdf:about="Svar_machine">
+		    <smash:MachineSpec>
+	          <smash:LatestTime>Svar_latestTime</smash:LatestTime>
+	        </smash:MachineSpec>
+	      </smash:WashingMachine>
+        </smash:Entity>
+      </xfn:FactQuery>
+      <css:CurrentDayOfWeek css:res_dayOfWeek="Svar_curDayOfWeek"/>
+	  <css:GetRemoteData css:provider="SIMENV" css:operation="getDailySchedule" css:param1="room" css:param1_val="Svar_EntityID" css:param2="machine" css:param2_val="Svar_machine" 
+	    css:param3="dayOfWeek" css:param3_val="Svar_curDayOfWeek" css:return_schedule="Svar_schedule" css:return_plan="Svar_startTime" css:return_timeChain="Svar_timeChain" 
+	    css:return_powerChain="Svar_powerChain" css:return_processNum="Svar_processNum"/>
+	  <!-- if the washing machine is planed to work(Svar_plan has value), then generate actions -->
+	  <xfn:GreaterThan xfn:number1="Svar_startTime" xfn:number2="0"/>
+	  <css:CurrentHour css:result="Svar_accumHour"/>
+	  <xfn:Modulo xfn:number1="Svar_accumHour" xfn:number2="24" xfn:result="Svar_hourMin1"/>
+	  <xfn:Subtract xfn:number1="Svar_startTime" xfn:number2="Svar_hourMin1" xfn:result="Svar_timeDiff"/>
+	  <xfn:LessThan xfn:number1="Svar_timeDiff" xfn:number2="2"/>
+	  <xfn:GreaterThanOrEqual xfn:number1="Svar_timeDiff" xfn:number2="1"/>
+	  <xfn:Add xfn:number1="Svar_hourMin1" xfn:number2="1" xfn:result="Svar_targetHour"/>
+	  <sfn:ConcatString sfn:string1="Svar_EntityID" sfn:string2="Svar_machine" sfn:result="Svar_key"/>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="ProcessNumber" sfn:result="Svar_processKey"/>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="TimeChain" sfn:result="Svar_timeKey"/>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="PowerChain" sfn:result="Svar_powerKey"/>	
+	  <xfn:SetInMemoryObject xfn:key="Svar_processKey" xfn:value="Svar_processNum" xfn:result="Svar_processes"/>		
+	  <xfn:SetInMemoryObject xfn:key="Svar_timeKey" xfn:value="Svar_timeChain" xfn:result="Svar_times"/>
+	  <xfn:SetInMemoryObject xfn:key="Svar_powerKey" xfn:value="Svar_powerChain" xfn:result="Svar_powers"/>
+	  <xfn:FactQuery xfn:uri='ds://Entity-Spec' xfn:mode='Set'>
+        <smash:Entity rdf:about='Svar_EntityID'>
+		  <smash:WashingMachine rdf:about="Svar_machine">
+		    <smash:Programs>
+	          <smash:Program smash:name="Svar_schedule">
+	            <smash:time>Svar_totalTime</smash:time>
+	          </smash:Program>
+	        </smash:Programs>
+	      </smash:WashingMachine>
+        </smash:Entity>
+      </xfn:FactQuery>
+      <css:CalculateEnergy css:time="Svar_totalTime" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain"
+        css:result="Svar_totalEnergy"/>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="Energy" sfn:result="Svar_energyKey"/>
+	  <xfn:SetInMemoryObject xfn:key="Svar_energyKey" xfn:value="Svar_totalEnergy" xfn:result="Svar_engeryDummy"/>
+      <xfn:Divide xfn:number1="Svar_totalTime" xfn:number2="60" xfn:result="Svar_totalHour"/>
+      <xfn:Add xfn:number1="Svar_totalHour" xfn:number2="Svar_startTime" xfn:result="Svar_finishTime"/>
+      <xfn:DirectInput xfn:name="goal" xfn:result="Svar_goal"/>
+      <xfn:SetOf xfn:mode='Set'>
+        <xfn:Set>Evar_entitySchedule</xfn:Set>
+        <xfn:Constructor>
+		<smash:ActionSet smash:set="1" smash:key1="Svar_EntityID">
+		  <smash:Action smash:type="WashingSchedulingAction">
+		    <smash:Entity>Svar_EntityID</smash:Entity>
+		    <smash:Machine>Svar_machine</smash:Machine>
+			<smash:start>Svar_dateString1</smash:start>
+	        <smash:duration>Svar_duration1</smash:duration>
+	        <smash:newStatus>0</smash:newStatus>
+	        <smash:cost smash:cost_cost="Svar_cost_cost1" smash:cost_comfort="0"/>
+		  </smash:Action>
+		  <smash:Action smash:type="WashingSchedulingAction">
+		    <smash:Entity>Svar_EntityID</smash:Entity>
+		    <smash:Machine>Svar_machine</smash:Machine>
+			<smash:start>Svar_dateString2</smash:start>
+	        <smash:duration>Svar_duration2</smash:duration>
+	        <smash:newStatus>1</smash:newStatus>
+	        <smash:cost smash:cost_cost="Svar_cost_cost2" smash:cost_comfort="Svar_cost_comfort"/>
+		  </smash:Action>
+		  <smash:Action smash:type="WashingSchedulingAction">
+		    <smash:Entity>Svar_EntityID</smash:Entity>
+		    <smash:Machine>Svar_machine</smash:Machine>
+			<smash:start>Svar_dateString3</smash:start>
+	        <smash:duration>Svar_duration3</smash:duration>
+	        <smash:newStatus>0</smash:newStatus>
+	        <smash:cost smash:cost_cost="0" smash:cost_comfort="0"/>
+		  </smash:Action>
+		</smash:ActionSet>
+        </xfn:Constructor>
+        <xfn:Condition>
+          <CheckGoal>
+            <Key>Svar_key</Key>
+	        <StartTime>Svar_startTime</StartTime>
+	        <TargetHour>Svar_targetHour</TargetHour>
+	        <TotalTime>Svar_totalTime</TotalTime>
+	        <FinishTime>Svar_finishTime</FinishTime>
+	        <LatestTime>Svar_latestTime</LatestTime>
+		    <Goal>Svar_goal</Goal>
+          </CheckGoal>
+		</xfn:Condition>
+      </xfn:SetOf>
+	</xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="CheckGoal1" xet:priority="1">
+    <xet:Head>
+      <CheckGoal>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <LatestTime>Svar_latestTime</LatestTime>
+		<Goal>Svar_goal</Goal>
+      </CheckGoal>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:StringEqual xfn:string1="Svar_goal" xfn:string2="comfort"/>
+    </xet:Condition>
+    <xet:Body>
+      <CheckTotalTime1>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+      </CheckTotalTime1>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="CheckGoal2" xet:priority="2">
+    <xet:Head>
+      <CheckGoal>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <LatestTime>Svar_latestTime</LatestTime>
+		<Goal>Svar_goal</Goal>
+      </CheckGoal>
+    </xet:Head>
+    <xet:Condition>      
+      <xfn:StringEqual xfn:string1="Svar_goal" xfn:string2="cost"/>
+    </xet:Condition>
+    <xet:Body>
+      <css:GetRemoteData css:provider="SIMENV" css:operation="getPriceCeiling" css:param1="time" css:param1_val="Svar_targetHour" css:return_priceCeiling="Svar_ceiling"/>
+      <xfn:Add xfn:number1="Svar_targetHour" xfn:number2="1" xfn:result="Svar_hourPlus1"/>
+      <xfn:Add xfn:number1="Svar_targetHour" xfn:number2="2" xfn:result="Svar_hourPlus2"/>
+      <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <xfn:Multiply xfn:number1="Svar_targetHour" xfn:number2="3600" xfn:result="Svar_targetTime"/>
+      <xfn:Multiply xfn:number1="Svar_hourPlus1" xfn:number2="3600" xfn:result="Svar_plus1Time"/>
+      <xfn:Multiply xfn:number1="Svar_hourPlus2" xfn:number2="3600" xfn:result="Svar_plus2Time"/>
+      <css:GetRemoteData css:provider="DSO" css:operation="getActElectricityPrice" css:param1="time" css:param1_val="Svar_targetTime" css:param2="day"
+        css:param2_val="Svar_curDay" css:param3="month" css:param3_val="Svar_curMonth" css:param4="year" css:param4_val="Svar_curYear" css:return_price="Svar_targetPrice"/>
+      <css:GetRemoteData css:provider="DSO" css:operation="getActElectricityPrice" css:param1="time" css:param1_val="Svar_plus1Time" css:param2="day"
+        css:param2_val="Svar_curDay" css:param3="month" css:param3_val="Svar_curMonth" css:param4="year" css:param4_val="Svar_curYear" css:return_price="Svar_plus1Price"/>
+      <css:GetRemoteData css:provider="DSO" css:operation="getEstElectricityPrice" css:param1="time" css:param1_val="Svar_plus2Time" css:param2="day"
+        css:param2_val="Svar_curDay" css:param3="month" css:param3_val="Svar_curMonth" css:param4="year" css:param4_val="Svar_curYear" css:return_price="Svar_plus2Price"/>
+      <CheckTimeSpan3>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus1>Svar_hourPlus1</HourPlus1>
+	    <HourPlus2>Svar_hourPlus2</HourPlus2>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <LatestTime>Svar_latestTime</LatestTime>
+	    <PriceCeiling>Svar_ceiling</PriceCeiling>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+      </CheckTimeSpan3>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="CheckTimeSpan1_1" xet:priority="1">
+    <xet:Head>
+      <CheckTimeSpan1>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus1>Svar_hourPlus1</HourPlus1>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <PriceCeiling>Svar_ceiling</PriceCeiling>
+	    <Min1Price>Svar_min1Price</Min1Price>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+      </CheckTimeSpan1>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:LessThanOrEqual xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus1"/>
+      <xfn:GreaterThanOrEqual xfn:number1="Svar_targetPrice" xfn:number2="Svar_ceiling"/>
+    </xet:Condition>
+    <xet:Body>
+      <xfn:Subtract xfn:number1="Svar_targetHour" xfn:number2="1" xfn:result="Svar_hourMin1"/>
+      <xfn:Subtract xfn:number1="Svar_hourPlus1" xfn:number2="Svar_startTime" xfn:result="Svar_forward"/>
+      <xfn:Subtract xfn:number1="Svar_finishTime" xfn:number2="Svar_targetHour" xfn:result="Svar_back"/>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="Energy" sfn:result="Svar_energyKey"/>
+      <xfn:GetInMemoryObject xfn:key="Svar_energyKey" xfn:result="Svar_totalEnergy"/>
+      <xfn:Multiply xfn:number1="Svar_totalEnergy" xfn:number2="Svar_min1Price" xfn:result="Svar_min1Cost"/>
+      <xfn:Multiply xfn:number1="Svar_totalEnergy" xfn:number2="Svar_targetPrice" xfn:result="Svar_targetCost"/>
+      <xfn:Multiply xfn:number1="Svar_totalEnergy" xfn:number2="Svar_plus1Price" xfn:result="Svar_plus1Cost"/>
+      <xfn:Subtract xfn:number1="Svar_min1Cost" xfn:number2="Svar_targetCost" xfn:result="Svar_backCost"/>
+      <xfn:Subtract xfn:number1="Svar_plus1Cost" xfn:number2="Svar_targetCost" xfn:result="Svar_forwardCost"/>
+      <css:GetMovement css:costForward="Svar_forwardCost" css:costBack="Svar_backCost" css:forward="Svar_forward" css:back="Svar_back" css:result="Svar_movement"/>
+      <xfn:AssignString xfn:variable="Svar_duration" xfn:value="60"/>
+      <xfn:Subtract xfn:number1="60" xfn:number2="Svar_totalTime" xfn:result="Svar_newTime"/>
+      <GeneratAction1>
+	    <HourMin1>Svar_hourMin1</HourMin1>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus>Svar_hourPlus1</HourPlus>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_movement</Movement>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plus1Cost</CostForward>
+	    <CostBack>Svar_min1Cost</CostBack>
+	    <Forward>Svar_forward</Forward>
+	    <Back>Svar_back</Back>
+	    <Duration>Svar_duration</Duration>
+	    <NewTime>Svar_newTime</NewTime>
+      </GeneratAction1>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="CheckTimeSpan1_2" xet:priority="2">
+    <xet:Head>
+      <CheckTimeSpan1>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus1>Svar_hourPlus1</HourPlus1>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <PriceCeiling>Svar_ceiling</PriceCeiling>
+	    <Min1Price>Svar_min1Price</Min1Price>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+      </CheckTimeSpan1>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:GreaterThan xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus1"/>
+      <xfn:Or>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_targetPrice" xfn:number2="Svar_ceiling"/>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_plus1Price" xfn:number2="Svar_ceiling"/>
+      </xfn:Or>
+      <xfn:GreaterThan xfn:number1="Svar_targetPrice" xfn:number2="Svar_plus1Price"/>
+    </xet:Condition>
+    <xet:Body>
+      <xfn:AssignString xfn:variable="Svar_newTime" xfn:value="0"/>
+      <xfn:Subtract xfn:number1="Svar_hourPlus1" xfn:number2="Svar_startTime" xfn:result="Svar_cost_comfort"/>
+      <GenerateAction2>
+        <Key>Svar_key</Key>
+        <TargetHour>Svar_targetHour</TargetHour>
+        <NewHour>Svar_hourPlus1</NewHour>
+        <NewTime>Svar_newTime</NewTime>
+        <FinishTime>Svar_finishTime</FinishTime>
+        <HourPlus1>Svar_hourPlus1</HourPlus1>
+        <TotalTime>Svar_totalTime</TotalTime>
+        <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+        <NewPrice>Svar_plus1Price</NewPrice>
+      </GenerateAction2>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="CheckTimeSpan1_3" xet:priority="3">
+    <xet:Head>
+      <CheckTimeSpan1>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus1>Svar_hourPlus1</HourPlus1>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <PriceCeiling>Svar_ceiling</PriceCeiling>
+	    <Min1Price>Svar_min1Price</Min1Price>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+      </CheckTimeSpan1>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:GreaterThan xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus1"/>
+      <xfn:Or>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_targetPrice" xfn:number2="Svar_ceiling"/>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_plus1Price" xfn:number2="Svar_ceiling"/>
+      </xfn:Or>
+      <xfn:LessThan xfn:number1="Svar_targetPrice" xfn:number2="Svar_plus1Price"/>
+    </xet:Condition>
+    <xet:Body>
+      <xfn:Subtract xfn:number1="60" xfn:number2="Svar_totalTime" xfn:result="Svar_newTime"/>
+      <xfn:Subtract xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus1" xfn:result="Svar_cost_comfort"/>
+      <GenerateAction2>
+        <Key>Svar_key</Key>
+        <TargetHour>Svar_targetHour</TargetHour>
+        <NewHour>Svar_targetHour</NewHour>
+        <NewTime>Svar_newTime</NewTime>
+        <FinishTime>Svar_finishTime</FinishTime>
+        <HourPlus1>Svar_hourPlus1</HourPlus1>
+        <TotalTime>Svar_totalTime</TotalTime>
+        <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+        <NewPrice>Svar_targetPrice</NewPrice>
+      </GenerateAction2>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="CheckTimeSpan1_4" xet:priority="4">
+    <xet:Head>
+      <CheckTimeSpan1>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus1>Svar_hourPlus1</HourPlus1>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <PriceCeiling>Svar_ceiling</PriceCeiling>
+	    <Min1Price>Svar_min1Price</Min1Price>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+      </CheckTimeSpan1>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:GreaterThan xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus1"/>
+      <xfn:Or>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_targetPrice" xfn:number2="Svar_ceiling"/>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_plus1Price" xfn:number2="Svar_ceiling"/>
+      </xfn:Or>
+      <xfn:NumberEqual xfn:number1="Svar_targetPrice" xfn:number2="Svar_plus1Price"/>
+    </xet:Condition>
+    <xet:Body>
+      <xfn:Subtract xfn:number1="Svar_targetHour" xfn:number2="1" xfn:result="Svar_hourMin1"/>
+      <xfn:Add xfn:number1="Svar_hourPlus1" xfn:number2="1" xfn:result="Svar_hourPlus2"/>
+      <xfn:Multiply xfn:number1="Svar_hourPlus2" xfn:number2="3600" xfn:result="Svar_plus2Time"/>
+      <xfn:Subtract xfn:number1="Svar_hourPlus2" xfn:number2="Svar_startTime" xfn:result="Svar_forward"/>
+      <xfn:Subtract xfn:number1="Svar_finishTime" xfn:number2="Svar_targetHour" xfn:result="Svar_back"/>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="Energy" sfn:result="Svar_energyKey"/>
+      <xfn:GetInMemoryObject xfn:key="Svar_energyKey" xfn:result="Svar_totalEnergy"/>
+      <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <css:GetRemoteData css:provider="DSO" css:operation="getEstElectricityPrice" css:param1="time" css:param1_val="Svar_plus2Time" css:param2="day"
+        css:param2_val="Svar_curDay" css:param3="month" css:param3_val="Svar_curMonth" css:param4="year" css:param4_val="Svar_curYear" css:return_price="Svar_plus2Price"/>
+      <xfn:Multiply xfn:number1="Svar_totalEnergy" xfn:number2="Svar_min1Price" xfn:result="Svar_min1Cost"/>
+      <xfn:Multiply xfn:number1="Svar_totalEnergy" xfn:number2="Svar_targetPrice" xfn:result="Svar_targetCost"/>
+      <xfn:Multiply xfn:number1="Svar_totalEnergy" xfn:number2="Svar_plus2Price" xfn:result="Svar_plus2Cost"/>
+      <xfn:Subtract xfn:number1="Svar_min1Cost" xfn:number2="Svar_targetCost" xfn:result="Svar_backCost"/>
+      <xfn:Subtract xfn:number1="Svar_plus2Cost" xfn:number2="Svar_targetCost" xfn:result="Svar_forwardCost"/>
+      <css:GetMovement css:costForward="Svar_forwardCost" css:costBack="Svar_backCost" css:forward="Svar_forward" css:back="Svar_back" css:result="Svar_movement"/>
+      <xfn:AssignString xfn:variable="Svar_duration" xfn:value="120"/>
+      <xfn:Subtract xfn:number1="60" xfn:number2="Svar_totalTime" xfn:result="Svar_newTime"/>
+      <GeneratAction1>
+	    <HourMin1>Svar_hourMin1</HourMin1>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus>Svar_hourPlus2</HourPlus>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_movement</Movement>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plus2Cost</CostForward>
+	    <CostBack>Svar_min1Cost</CostBack>
+	    <Forward>Svar_forward</Forward>
+	    <Back>Svar_back</Back>
+	    <Duration>Svar_duration</Duration>
+	    <NewTime>Svar_newTime</NewTime>
+      </GeneratAction1>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="CheckTimeSpan2_1" xet:priority="1">
+    <xet:Head>
+      <CheckTimeSpan2>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus1>Svar_hourPlus1</HourPlus1>
+	    <HourPlus2>Svar_hourPlus2</HourPlus2>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <PriceCeiling>Svar_ceiling</PriceCeiling>
+	    <Min1Price>Svar_min1Price</Min1Price>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+      </CheckTimeSpan2>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:LessThanOrEqual xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus2"/>
+      <xfn:Or>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_targetPrice" xfn:number2="Svar_ceiling"/>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_plus1Price" xfn:number2="Svar_ceiling"/>
+      </xfn:Or>
+      <xfn:Not>
+        <xfn:NumberEqual xfn:number1="Svar_targetPrice" xfn:number2="Svar_plus1Price"/>
+      </xfn:Not>
+    </xet:Condition>
+    <xet:Body>
+      <xfn:Subtract xfn:number1="Svar_startTime" xfn:number2="Svar_targetHour" xfn:result="Svar_back"/>
+      <xfn:Subtract xfn:number1="Svar_hourPlus2" xfn:number2="Svar_finishTime" xfn:result="Svar_forward"/>
+      <xfn:Subtract xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus1" xfn:result="Svar_timeTemp"/>
+      <xfn:Multiply xfn:number1="Svar_timeTemp" xfn:number2="60" xfn:result="Svar_timeToCal1"/>
+      <xfn:Subtract xfn:number1="Svar_totalTime" xfn:number2="60" xfn:result="Svar_timeToCal2"/>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="TimeChain" sfn:result="Svar_timeKey"/>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="PowerChain" sfn:result="Svar_powerKey"/>		
+	  <xfn:GetInMemoryObject xfn:key="Svar_timeKey" xfn:result="Svar_timeChain"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_powerKey" xfn:result="Svar_powerChain"/>
+	  <css:CalculateEnergy css:time="Svar_timeToCal1" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy1"/>
+      <css:CalculateEnergy css:time="Svar_timeToCal2" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy2"/>
+      <css:CalculateEnergy css:time="60" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy3"/>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="Energy" sfn:result="Svar_energyKey"/>
+      <xfn:GetInMemoryObject xfn:key="Svar_energyKey" xfn:result="Svar_totalEnergy"/>
+      <xfn:Subtract xfn:number1="Svar_totalEnergy" xfn:number2="Svar_subEnergy1" xfn:result="Svar_left1"/>
+      <xfn:Multiply xfn:number1="Svar_left1" xfn:number2="Svar_targetPrice" xfn:result="Svar_targetCost1"/>
+      <xfn:Multiply xfn:number1="Svar_subEnergy1" xfn:number2="Svar_plus1Price" xfn:result="Svar_targetCost2"/>
+      <xfn:Add xfn:number1="Svar_targetCost1" xfn:number2="Svar_targetCost2" xfn:result="Svar_targetCost"/>
+      <xfn:Subtract xfn:number1="Svar_totalEnergy" xfn:number2="Svar_subEnergy2" xfn:result="Svar_left2"/>
+      <xfn:Multiply xfn:number1="Svar_left2" xfn:number2="Svar_targetPrice" xfn:result="Svar_min1Cost1"/>
+      <xfn:Multiply xfn:number1="Svar_subEnergy2" xfn:number2="Svar_plus1Price" xfn:result="Svar_min1Cost2"/>
+      <xfn:Add xfn:number1="Svar_min1Cost1" xfn:number2="Svar_min1Cost2" xfn:result="Svar_min1Cost"/>
+      <xfn:Subtract xfn:number1="Svar_totalEnergy" xfn:number2="Svar_subEnergy3" xfn:result="Svar_left3"/>
+      <xfn:Multiply xfn:number1="Svar_left3" xfn:number2="Svar_targetPrice" xfn:result="Svar_plus1Cost1"/>
+      <xfn:Multiply xfn:number1="Svar_subEnergy3" xfn:number2="Svar_plus1Price" xfn:result="Svar_plus1Cost2"/>
+      <xfn:Add xfn:number1="Svar_plus1Cost1" xfn:number2="Svar_plus1Cost2" xfn:result="Svar_plus1Cost"/>
+      <xfn:Subtract xfn:number1="Svar_min1Cost" xfn:number2="Svar_targetCost" xfn:result="Svar_backCost"/>
+      <xfn:Subtract xfn:number1="Svar_plus1Cost" xfn:number2="Svar_targetCost" xfn:result="Svar_forwardCost"/>
+      <css:GetMovement css:back="Svar_back" css:forward="Svar_forward" css:costBack="Svar_backCost" css:costForward="Svar_forwardCost" css:result="Svar_movement"/>
+      <GeneratAction3>
+        <Key>Svar_key</Key>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_movement</Movement>
+	    <Min1Price>Svar_min1Price</Min1Price>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plus1Cost</CostForward>
+	    <CostBack>Svar_min1Cost</CostBack>
+	    <Forward>Svar_forward</Forward>
+	    <Back>Svar_back</Back>
+      </GeneratAction3>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="CheckTimeSpan2_2" xet:priority="2">
+    <xet:Head>
+      <CheckTimeSpan2>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus1>Svar_hourPlus1</HourPlus1>
+	    <HourPlus2>Svar_hourPlus2</HourPlus2>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <PriceCeiling>Svar_ceiling</PriceCeiling>
+	    <Min1Price>Svar_min1Price</Min1Price>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+      </CheckTimeSpan2>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:LessThanOrEqual xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus2"/>
+      <xfn:Or>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_targetPrice" xfn:number2="Svar_ceiling"/>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_plus1Price" xfn:number2="Svar_ceiling"/>
+      </xfn:Or>
+      <xfn:NumberEqual xfn:number1="Svar_targetPrice" xfn:number2="Svar_plus1Price"/>
+    </xet:Condition>
+    <xet:Body>
+      <xfn:Subtract xfn:number1="Svar_hourPlus1" xfn:number2="Svar_startTime" xfn:result="Svar_forward"/>
+      <xfn:Subtract xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus1" xfn:result="Svar_back"/>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="TimeChain" sfn:result="Svar_timeKey"/>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="PowerChain" sfn:result="Svar_powerKey"/>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="Energy" sfn:result="Svar_energyKey"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_timeKey" xfn:result="Svar_timeChain"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_powerKey" xfn:result="Svar_powerChain"/>	
+	  <xfn:GetInMemoryObject xfn:key="Svar_energyKey" xfn:result="Svar_totalEnergy"/>
+	  <xfn:Multiply xfn:number1="Svar_totalEnergy" xfn:number2="Svar_targetPrice" xfn:result="Svar_targetCost"/>
+	  <xfn:Subtract xfn:number1="Svar_totalTime" xfn:number2="60" xfn:result="Svar_timeToCal"/>
+	  <css:CalculateEnergy css:time="60" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy1"/>
+	  <css:CalculateEnergy css:time="Svar_timeToCal" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy2"/>
+	  <xfn:Subtract xfn:number1="Svar_totalEnergy" xfn:number2="Svar_subEnergy1" xfn:result="Svar_left1"/>
+	  <xfn:Subtract xfn:number1="Svar_totalEnergy" xfn:number2="Svar_subEnergy2" xfn:result="Svar_left2"/>
+	  <xfn:Multiply xfn:number1="Svar_left1" xfn:number2="Svar_min1Price" xfn:result="Svar_minCost1"/>
+	  <xfn:Multiply xfn:number1="Svar_subEnergy1" xfn:number2="Svar_targetPrice" xfn:result="Svar_minCost2"/>
+	  <xfn:Add xfn:number1="Svar_minCost1" xfn:number2="Svar_minCost2" xfn:result="Svar_minCost"/>
+	  <xfn:Subtract xfn:number1="Svar_minCost" xfn:number2="Svar_targetCost" xfn:result="Svar_backCost"/>
+	  <xfn:Multiply xfn:number1="Svar_left2" xfn:number2="Svar_plus1Price" xfn:result="Svar_plusCost1"/>
+	  <xfn:Multiply xfn:number1="Svar_subEnergy2" xfn:number2="Svar_plus2Price" xfn:result="Svar_plusCost2"/>
+	  <xfn:Add xfn:number1="Svar_plusCost1" xfn:number2="Svar_plusCost2" xfn:result="Svar_plusCost"/>
+	  <xfn:Subtract xfn:number1="Svar_plusCost" xfn:number2="Svar_targetCost" xfn:result="Svar_forwardCost"/>
+	  <css:GetMovement css:forward="Svar_forward" css:costForward="Svar_forwardCost" css:back="Svar_back" css:costBack="Svar_backCost" css:result="Svar_movement"/>
+	  <xfn:Subtract xfn:number1="Svar_targetHour" xfn:number2="1" xfn:result="Svar_hourMin1"/>
+	  <xfn:AssignString xfn:variable="Svar_duration" xfn:value="120"/>
+	  <xfn:Subtract xfn:number1="120" xfn:number2="Svar_totalTime" xfn:result="Svar_newTime"/>
+	  <GeneratAction1>
+	    <HourMin1>Svar_hourMin1</HourMin1>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus>Svar_hourPlus1</HourPlus>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_movement</Movement>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plusCost</CostForward>
+	    <CostBack>Svar_minCost</CostBack>
+	    <Forward>Svar_forward</Forward>
+	    <Back>Svar_back</Back>
+	    <Duration>Svar_duration</Duration>
+	    <NewTime>Svar_newTime</NewTime>
+	  </GeneratAction1>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="CheckTimeSpan2_3" xet:priority="3">
+    <xet:Head>
+      <CheckTimeSpan2>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus1>Svar_hourPlus1</HourPlus1>
+	    <HourPlus2>Svar_hourPlus2</HourPlus2>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <PriceCeiling>Svar_ceiling</PriceCeiling>
+	    <Min1Price>Svar_min1Price</Min1Price>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+      </CheckTimeSpan2>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:GreaterThan xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus2"/>
+      <xfn:Or>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_targetPrice" xfn:number2="Svar_ceiling"/>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_plus1Price" xfn:number2="Svar_ceiling"/>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_plus2Price" xfn:number2="Svar_ceiling"/>
+      </xfn:Or>
+    </xet:Condition>
+    <xet:Body>
+      <xfn:Subtract xfn:number1="Svar_hourPlus1" xfn:number2="Svar_startTime" xfn:result="Svar_forward"/>
+      <xfn:Subtract xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus2" xfn:result="Svar_back"/>
+      <xfn:Multiply xfn:number1="Svar_back" xfn:number2="60" xfn:result="Svar_backInMinute"/>
+      <xfn:Subtract xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus1" xfn:result="Svar_timeToCal1Temp"/>
+      <xfn:Multiply xfn:number1="Svar_timeToCal1Temp" xfn:number2="60" xfn:result="Svar_timeToCal1"/>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="TimeChain" sfn:result="Svar_timeKey"/>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="PowerChain" sfn:result="Svar_powerKey"/>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="Energy" sfn:result="Svar_energyKey"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_timeKey" xfn:result="Svar_timeChain"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_powerKey" xfn:result="Svar_powerChain"/>	
+	  <xfn:GetInMemoryObject xfn:key="Svar_energyKey" xfn:result="Svar_totalEnergy"/>
+	  <xfn:Subtract xfn:number1="Svar_totalTime" xfn:number2="60" xfn:result="Svar_timeToCal2"/>
+	  <css:CalculateEnergy css:time="60" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy1"/>
+	  <css:CalculateEnergy css:time="Svar_timeToCal1" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy2"/>
+	  <css:CalculateEnergy css:time="Svar_timeToCal2" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy3"/>
+	  <css:CalculateEnergy css:time="Svar_backInMinute" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy4"/>
+	  <xfn:Subtract xfn:number1="Svar_totalEnergy" xfn:number2="Svar_subEnergy1" xfn:result="Svar_left1"/>
+	  <xfn:Subtract xfn:number1="Svar_totalEnergy" xfn:number2="Svar_subEnergy2" xfn:result="Svar_left2"/>
+	  <xfn:Subtract xfn:number1="Svar_totalEnergy" xfn:number2="Svar_subEnergy3" xfn:result="Svar_left3"/>
+	  <xfn:Subtract xfn:number1="Svar_subEnergy2" xfn:number2="Svar_subEnergy4" xfn:result="Svar_mid2"/>
+	  <xfn:Multiply xfn:number1="Svar_left1" xfn:number2="Svar_targetPrice" xfn:result="Svar_minCost1"/>
+	  <xfn:Multiply xfn:number1="Svar_subEnergy1" xfn:number2="Svar_plus1Price" xfn:result="Svar_minCost2"/>
+	  <xfn:Add xfn:number1="Svar_minCost1" xfn:number2="Svar_minCost2" xfn:result="Svar_minCost"/>
+	  <xfn:Multiply xfn:number1="Svar_left2" xfn:number2="Svar_targetPrice" xfn:result="Svar_targetCost1"/>
+	  <xfn:Multiply xfn:number1="Svar_mid2" xfn:number2="Svar_plus1Price" xfn:result="Svar_targetCost2"/>
+	  <xfn:Multiply xfn:number1="Svar_subEnergy4" xfn:number2="Svar_plus2Price" xfn:result="Svar_targetCost3"/>
+	  <xfn:Add xfn:number1="Svar_targetCost1" xfn:number2="Svar_targetCost2" xfn:result="Svar_targetCostTemp"/>
+	  <xfn:Add xfn:number1="Svar_targetCostTemp" xfn:number2="Svar_targetCost3" xfn:result="Svar_targetCost"/>
+	  <xfn:Multiply xfn:number1="Svar_left3" xfn:number2="Svar_plus1Price" xfn:result="Svar_plusCost1"/>
+	  <xfn:Multiply xfn:number1="Svar_subEnergy3" xfn:number2="Svar_plus2Price" xfn:result="Svar_plusCost2"/>
+	  <xfn:Add xfn:number1="Svar_plusCost1" xfn:number2="Svar_plusCost2" xfn:result="Svar_plusCost"/>
+	  <xfn:Subtract xfn:number1="Svar_minCost" xfn:number2="Svar_targetCost" xfn:result="Svar_backCost"/>
+	  <xfn:Subtract xfn:number1="Svar_plusCost" xfn:number2="Svar_targetCost" xfn:result="Svar_forwardCost"/>
+	  <css:GetMovement css:forward="Svar_forward" css:costForward="Svar_forwardCost" css:back="Svar_back" css:costBack="Svar_backCost" css:result="Svar_movement"/>
+	  <xfn:AssignString xfn:variable="Svar_duration" xfn:value="180"/>
+	  <xfn:Subtract xfn:number1="120" xfn:number2="Svar_totalTime" xfn:result="Svar_newTime"/>
+	  <GeneratAction4>
+	    <Key>Svar_key</Key>
+	    <HourMin1>Svar_targetHour</HourMin1>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus>Svar_hourPlus1</HourPlus>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_movement</Movement>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plusCost</CostForward>
+	    <CostBack>Svar_minCost</CostBack>
+	    <Forward>Svar_forward</Forward>
+	    <Back>Svar_back</Back>
+	    <Duration>Svar_duration</Duration>
+	    <NewTime>Svar_newTime</NewTime>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+	  </GeneratAction4>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="CheckTimeSpan3_1" xet:priority="1">
+    <xet:Head>
+      <CheckTimeSpan3>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus1>Svar_hourPlus1</HourPlus1>
+	    <HourPlus2>Svar_hourPlus2</HourPlus2>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <LatestTime>Svar_latestTime</LatestTime>
+	    <PriceCeiling>Svar_ceiling</PriceCeiling>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+      </CheckTimeSpan3>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:LessThanOrEqual xfn:number1="Svar_totalTime" xfn:number2="60"/>
+      <xfn:LessThanOrEqual xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus1"/>
+      <xfn:GreaterThanOrEqual xfn:number1="Svar_targetPrice" xfn:number2="Svar_ceiling"/>
+    </xet:Condition>
+    <xet:Body>
+      <css:GetRemoteData css:provider="DSO" css:operation="getLowestPrice" css:param1="targetHour" css:param1_val="Svar_targetHour" css:param2="latestTime"
+        css:param2_val="Svar_latestTime" css:return_time="Svar_newTime" css:return_price="Svar_lowestPrice"/>
+      <xfn:Not>
+        <xfn:NumberEqual xfn:number1="Svar_newTime" xfn:number2="Svar_targetHour"/>
+      </xfn:Not>
+      <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="0" css:result="Svar_dateString1"/>
+      <xfn:AssignString xfn:variable="Svar_duration1" xfn:value="60"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_newTime" css:min="0" css:result="Svar_dateString2"/>
+      <xfn:AssignString xfn:variable="Svar_duration2" xfn:value="Svar_totalTime"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="0" css:min="0" css:result="Svar_dateString3"/>
+      <xfn:AssignString xfn:variable="Svar_duration3" xfn:value="0"/>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="Energy" sfn:result="Svar_energyKey"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_energyKey" xfn:result="Svar_totalEnergy"/>
+	  <xfn:Multiply xfn:number1="Svar_totalEnergy" xfn:number2="Svar_targetPrice" xfn:result="Svar_targetCost"/>
+	  <xfn:Subtract xfn:number1="0" xfn:number2="Svar_targetCost" xfn:result="Svar_cost_cost1"/>
+	  <xfn:Multiply xfn:number1="Svar_totalEnergy" xfn:number2="Svar_lowestPrice" xfn:result="Svar_cost_cost2"/>
+      <xfn:Subtract xfn:number1="Svar_newTime" xfn:number2="Svar_targetHour" xfn:result="Svar_cost_comfort"/>
+    </xet:Body>
+  </xet:Rule>  
+  <xet:Rule xet:name="CheckTimeSpan3_2" xet:priority="2">
+    <xet:Head>
+      <CheckTimeSpan3>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus1>Svar_hourPlus1</HourPlus1>
+	    <HourPlus2>Svar_hourPlus2</HourPlus2>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <LatestTime>Svar_latestTime</LatestTime>
+	    <PriceCeiling>Svar_ceiling</PriceCeiling>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+      </CheckTimeSpan3>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:GreaterThan xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus1"/>
+      <xfn:LessThanOrEqual xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus2"/>
+    </xet:Condition>
+    <xet:Body>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="TimeChain" sfn:result="Svar_timeKey"/>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="PowerChain" sfn:result="Svar_powerKey"/>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="Energy" sfn:result="Svar_energyKey"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_timeKey" xfn:result="Svar_timeChain"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_powerKey" xfn:result="Svar_powerChain"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_energyKey" xfn:result="Svar_totalEnergy"/>
+	  <xfn:Subtract xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus1" xfn:result="Svar_timeTemp"/>
+	  <xfn:Multiply xfn:number1="Svar_timeTemp" xfn:number2="60" xfn:result="Svar_timeToCal"/>
+	  <css:CalculateEnergy css:time="Svar_timeToCal" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy"/>
+	  <xfn:Subtract xfn:number1="Svar_totalEnergy" xfn:number2="Svar_subEnergy" xfn:result="Svar_left"/>
+	  <xfn:Multiply xfn:number1="Svar_left" xfn:number2="Svar_targetPrice" xfn:result="Svar_targetCost1"/>
+	  <xfn:Multiply xfn:number1="Svar_subEnergy" xfn:number2="Svar_plus1Price" xfn:result="Svar_targetCost2"/>
+	  <xfn:Add xfn:number1="Svar_targetCost1" xfn:number2="Svar_targetCost2" xfn:result="Svar_targetCost"/>
+	  <CheckToTalTime2>
+	    <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <LatestTime>Svar_latestTime</LatestTime>
+	    <TargetCost>Svar_targetCost</TargetCost>
+	  </CheckToTalTime2>
+    </xet:Body>
+  </xet:Rule> 
+  <xet:Rule xet:name="CheckTimeSpan3_3" xet:priority="3">
+    <xet:Head>
+      <CheckTimeSpan3>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus1>Svar_hourPlus1</HourPlus1>
+	    <HourPlus2>Svar_hourPlus2</HourPlus2>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <LatestTime>Svar_latestTime</LatestTime>
+	    <PriceCeiling>Svar_ceiling</PriceCeiling>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+      </CheckTimeSpan3>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:GreaterThan xfn:number1="Svar_totalTime" xfn:number2="60"/>
+      <xfn:LessThanOrEqual xfn:number1="Svar_totalTime" xfn:number2="120"/>
+      <xfn:GreaterThan xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus2"/>
+      <xfn:Or>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_targetPrice" xfn:number2="Svar_ceiling"/>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_plus1Price" xfn:number2="Svar_ceiling"/>
+        <xfn:GreaterThanOrEqual xfn:number1="Svar_plus2Price" xfn:number2="Svar_ceiling"/>
+      </xfn:Or>
+    </xet:Condition>
+    <xet:Body>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="TimeChain" sfn:result="Svar_timeKey"/>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="PowerChain" sfn:result="Svar_powerKey"/>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="Energy" sfn:result="Svar_energyKey"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_timeKey" xfn:result="Svar_timeChain"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_powerKey" xfn:result="Svar_powerChain"/>	
+	  <xfn:GetInMemoryObject xfn:key="Svar_energyKey" xfn:result="Svar_totalEnergy"/>
+	  <xfn:Subtract xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus2" xfn:result="Svar_timeTemp1"/>
+	  <xfn:Subtract xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus1" xfn:result="Svar_timeTemp2"/>
+	  <xfn:Multiply xfn:number1="Svar_timeTemp1" xfn:number2="60" xfn:result="Svar_timeToCal1"/>
+	  <xfn:Multiply xfn:number1="Svar_timeTemp2" xfn:number2="60" xfn:result="Svar_timeToCal2"/>
+	  <css:CalculateEnergy css:time="Svar_timeToCal1" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy1"/>
+	  <css:CalculateEnergy css:time="Svar_timeToCal2" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy2"/>
+	  <xfn:Subtract xfn:number1="Svar_totalEnergy" xfn:number2="Svar_subEnergy2" xfn:result="Svar_left"/>
+	  <xfn:Subtract xfn:number1="Svar_subEnergy2" xfn:number2="Svar_subEnergy1" xfn:result="Svar_mid"/>
+	  <xfn:Multiply xfn:number1="Svar_left" xfn:number2="Svar_targetPrice" xfn:result="Svar_targetCost1"/>
+	  <xfn:Multiply xfn:number1="Svar_mid" xfn:number2="Svar_plus1Price" xfn:result="Svar_targetCost2"/>
+	  <xfn:Multiply xfn:number1="Svar_subEnergy1" xfn:number2="Svar_plus2Price" xfn:result="Svar_targetCost3"/>
+	  <xfn:Add xfn:number1="Svar_targetCost1" xfn:number2="Svar_targetCost2" xfn:result="Svar_costTemp"/>
+	  <xfn:Add xfn:number1="Svar_costTemp" xfn:number2="Svar_targetCost3" xfn:result="Svar_targetCost"/>
+	  <xfn:Subtract xfn:number1="Svar_totalTime" xfn:number2="60" xfn:result="Svar_timeToCal"/>
+	  <css:CalculateEnergy css:time="Svar_timeToCal" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_energy1"/>
+	  <css:CalculateEnergy css:time="60" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_energy2"/>
+	  <css:GetRemoteData css:provider="SIMENV" css:operation="getNewStartTime" css:param1="totalEnergy" css:param1_val="Svar_totalEnergy" css:param2="subEnergy1" css:param2_val="Svar_energy1" 
+        css:param3="subEnergy2" css:param3_val="Svar_energy2" css:param4="originalCost" css:param4_val="Svar_targetCost" css:param5="latestTime" css:param5_val="Svar_latestTime" 
+        css:param6="totalTime" css:param6_val="Svar_totalTime" css:return_hour="Svar_newHour" css:return_time="Svar_newTime" css:return_cost="Svar_newCost" css:return_continuous="Svar_continuous"/>
+      <CheckContinuous>
+        <Hour>Svar_newHour</Hour>
+        <Time>Svar_newTime</Time>
+        <Continuous>Svar_continuous</Continuous>
+        <TargetCost>Svar_targetCost</TargetCost>
+        <NewCost>Svar_newCost</NewCost>
+        <TotalTime>Svar_totalTime</TotalTime>
+      </CheckContinuous>
+    </xet:Body>
+  </xet:Rule> 
+  <xet:Rule xet:name="CheckTotalTime1_1" xet:priority="1">
+    <xet:Head>
+      <CheckTotalTime1>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+      </CheckTotalTime1>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:LessThanOrEqual xfn:number1="Svar_totalTime" xfn:number2="60"/>
+    </xet:Condition>
+    <xet:Body>
+      <css:GetRemoteData css:provider="SIMENV" css:operation="getPriceCeiling" css:param1="time" css:param1_val="Svar_targetHour" css:return_priceCeiling="Svar_ceiling"/>
+      <xfn:Add xfn:number1="Svar_targetHour" xfn:number2="1" xfn:result="Svar_hourPlus1"/>
+      <xfn:Multiply xfn:number1="Svar_targetHour" xfn:number2="3600" xfn:result="Svar_targetTime"/>
+      <xfn:Multiply xfn:number1="Svar_hourPlus1" xfn:number2="3600" xfn:result="Svar_plus1Time"/>
+      <css:CurrentTime css:res_time="Svar_curTime" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <css:GetRemoteData css:provider="DSO" css:operation="getActElectricityPrice" css:param1="time" css:param1_val="Svar_curTime" css:param2="day"
+        css:param2_val="Svar_curDay" css:param3="month" css:param3_val="Svar_curMonth" css:param4="year" css:param4_val="Svar_curYear" css:return_price="Svar_min1Price"/>
+      <css:GetRemoteData css:provider="DSO" css:operation="getActElectricityPrice" css:param1="time" css:param1_val="Svar_targetTime" css:param2="day"
+        css:param2_val="Svar_curDay" css:param3="month" css:param3_val="Svar_curMonth" css:param4="year" css:param4_val="Svar_curYear" css:return_price="Svar_targetPrice"/>
+      <css:GetRemoteData css:provider="DSO" css:operation="getEstElectricityPrice" css:param1="time" css:param1_val="Svar_plus1Time" css:param2="day"
+        css:param2_val="Svar_curDay" css:param3="month" css:param3_val="Svar_curMonth" css:param4="year" css:param4_val="Svar_curYear" css:return_price="Svar_plus1Price"/>
+      <CheckTimeSpan1>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus1>Svar_hourPlus1</HourPlus1>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <PriceCeiling>Svar_ceiling</PriceCeiling>
+	    <Min1Price>Svar_min1Price</Min1Price>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+      </CheckTimeSpan1>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="CheckTotalTime1_2" xet:priority="2">
+    <xet:Head>
+      <CheckTotalTime1>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+      </CheckTotalTime1>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:GreaterThan xfn:number1="Svar_totalTime" xfn:number2="60"/>
+      <xfn:LessThanOrEqual xfn:number1="Svar_totalTime" xfn:number2="120"/>
+    </xet:Condition>
+    <xet:Body>
+      <css:GetRemoteData css:provider="SIMENV" css:operation="getPriceCeiling" css:param1="time" css:param1_val="Svar_targetHour" css:return_priceCeiling="Svar_ceiling"/>
+      <xfn:Add xfn:number1="Svar_targetHour" xfn:number2="1" xfn:result="Svar_hourPlus1"/>
+      <xfn:Add xfn:number1="Svar_targetHour" xfn:number2="2" xfn:result="Svar_hourPlus2"/>
+      <xfn:Multiply xfn:number1="Svar_targetHour" xfn:number2="3600" xfn:result="Svar_targetTime"/>
+      <xfn:Multiply xfn:number1="Svar_hourPlus1" xfn:number2="3600" xfn:result="Svar_plus1Time"/>
+      <xfn:Multiply xfn:number1="Svar_hourPlus2" xfn:number2="3600" xfn:result="Svar_plus2Time"/>
+      <css:CurrentTime css:res_time="Svar_curTime" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <css:GetRemoteData css:provider="DSO" css:operation="getActElectricityPrice" css:param1="time" css:param1_val="Svar_curTime" css:param2="day"
+        css:param2_val="Svar_curDay" css:param3="month" css:param3_val="Svar_curMonth" css:param4="year" css:param4_val="Svar_curYear" css:return_price="Svar_min1Price"/>
+      <css:GetRemoteData css:provider="DSO" css:operation="getActElectricityPrice" css:param1="time" css:param1_val="Svar_targetTime" css:param2="day"
+        css:param2_val="Svar_curDay" css:param3="month" css:param3_val="Svar_curMonth" css:param4="year" css:param4_val="Svar_curYear" css:return_price="Svar_targetPrice"/>
+      <css:GetRemoteData css:provider="DSO" css:operation="getEstElectricityPrice" css:param1="time" css:param1_val="Svar_plus1Time" css:param2="day"
+        css:param2_val="Svar_curDay" css:param3="month" css:param3_val="Svar_curMonth" css:param4="year" css:param4_val="Svar_curYear" css:return_price="Svar_plus1Price"/>
+      <css:GetRemoteData css:provider="DSO" css:operation="getEstElectricityPrice" css:param1="time" css:param1_val="Svar_plus2Time" css:param2="day"
+        css:param2_val="Svar_curDay" css:param3="month" css:param3_val="Svar_curMonth" css:param4="year" css:param4_val="Svar_curYear" css:return_price="Svar_plus2Price"/>
+      <CheckTimeSpan2>
+        <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus1>Svar_hourPlus1</HourPlus1>
+	    <HourPlus2>Svar_hourPlus2</HourPlus2>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <PriceCeiling>Svar_ceiling</PriceCeiling>
+	    <Min1Price>Svar_min1Price</Min1Price>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+      </CheckTimeSpan2>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="CheckTotalTime2_1" xet:priority="1">
+    <xet:Head>
+      <CheckToTalTime2>
+	    <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <LatestTime>Svar_latestTime</LatestTime>
+	    <TargetCost>Svar_targetCost</TargetCost>
+	  </CheckToTalTime2>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:LessThanOrEqual xfn:number1="Svar_totalTime" xfn:number2="60"/>
+    </xet:Condition>
+    <xet:Body>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="Energy" sfn:result="Svar_energyKey"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_energyKey" xfn:result="Svar_totalEnergy"/>
+      <css:GetRemoteData css:provider="DSO" css:operation="getLowestPrice" css:param1="targetHour" css:param1_val="Svar_targetHour" css:param2="latestTime"
+        css:param2_val="Svar_latestTime" css:return_time="Svar_newTime" css:return_price="Svar_lowestPrice"/>
+      <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="0" css:result="Svar_dateString1"/>
+      <xfn:AssignString xfn:variable="Svar_duration1" xfn:value="120"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_newTime" css:min="0" css:result="Svar_dateString2"/>
+      <xfn:AssignString xfn:variable="Svar_duration2" xfn:value="Svar_totalTime"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="0" css:min="0" css:result="Svar_dateString3"/>
+      <xfn:AssignString xfn:variable="Svar_duration3" xfn:value="0"/>
+      <xfn:Subtract xfn:number1="0" xfn:number2="Svar_targetCost" xfn:result="Svar_cost_cost1"/>
+	  <xfn:Multiply xfn:number1="Svar_totalEnergy" xfn:number2="Svar_lowestPrice" xfn:result="Svar_cost_cost2"/>
+      <xfn:Subtract xfn:number1="Svar_newTime" xfn:number2="Svar_targetHour" xfn:result="Svar_cost_comfort"/>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="CheckTotalTime2_2" xet:priority="2">
+    <xet:Head>
+      <CheckToTalTime2>
+	    <Key>Svar_key</Key>
+	    <StartTime>Svar_startTime</StartTime>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <FinishTime>Svar_finishTime</FinishTime>
+	    <LatestTime>Svar_latestTime</LatestTime>
+	    <TargetCost>Svar_targetCost</TargetCost>
+	  </CheckToTalTime2>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:GreaterThan xfn:number1="Svar_totalTime" xfn:number2="60"/>
+      <xfn:LessThanOrEqual xfn:number1="Svar_totalTime" xfn:number2="120"/>
+    </xet:Condition>
+    <xet:Body>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="TimeChain" sfn:result="Svar_timeKey"/>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="PowerChain" sfn:result="Svar_powerKey"/>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="Energy" sfn:result="Svar_energyKey"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_timeKey" xfn:result="Svar_timeChain"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_powerKey" xfn:result="Svar_powerChain"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_energyKey" xfn:result="Svar_totalEnergy"/>
+      <xfn:Subtract xfn:number1="Svar_totalTime" xfn:number2="60" xfn:result="Svar_timeToCal"/>
+      <css:CalculateEnergy css:time="Svar_timeToCal" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy1"/>
+      <css:CalculateEnergy css:time="60" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy2"/>
+      <css:GetRemoteData css:provider="SIMENV" css:operation="getNewStartTime" css:param1="totalEnergy" css:param1_val="Svar_totalEnergy" css:param2="subEnergy1" css:param2_val="Svar_subEnergy1" 
+        css:param3="subEnergy2" css:param3_val="Svar_subEnergy2" css:param4="originalCost" css:param4_val="Svar_targetCost" css:param5="latestTime" css:param5_val="Svar_latestTime" 
+        css:param6="totalTime" css:param6_val="Svar_totalTime" css:return_hour="Svar_newHour" css:return_time="Svar_newTime" css:return_cost="Svar_newCost" css:return_continuous="Svar_continuous"/>
+      <CheckContinuous>
+        <Hour>Svar_newHour</Hour>
+        <Time>Svar_newTime</Time>
+        <Continuous>Svar_continuous</Continuous>
+        <TargetCost>Svar_targetCost</TargetCost>
+        <NewCost>Svar_newCost</NewCost>
+        <TotalTime>Svar_totalTime</TotalTime>
+      </CheckContinuous>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="CheckContinuous1" xet:priority="1">
+    <xet:Head>
+      <CheckContinuous>
+        <Hour>Svar_newHour</Hour>
+        <Time>Svar_newTime</Time>
+        <Continuous>Svar_continuous</Continuous>
+        <TargetCost>Svar_targetCost</TargetCost>
+        <NewCost>Svar_newCost</NewCost>
+        <TotalTime>Svar_totalTime</TotalTime>
+      </CheckContinuous>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:StringEqual xfn:string1="Svar_continuous" xfn:string2="true"/>
+    </xet:Condition>
+    <xet:Body>
+      <css:CurrentTime css:res_time="Svar_curTime" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <xfn:Divide xfn:number1="Svar_curTime" xfn:number2="3600" xfn:result="Svar_curHourTemp"/>
+      <xfn:Modulo xfn:number1="Svar_curHourTemp" xfn:number2="24" xfn:result="Svar_curHour"/>
+      <xfn:Add xfn:number1="Svar_curHour" xfn:number2="1" xfn:result="Svar_targetHour"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="0" css:result="Svar_dateString1"/>
+      <xfn:AssignString xfn:variable="Svar_duration1" xfn:value="180"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_newHour" css:min="Svar_newTime" css:result="Svar_dateString2"/>
+      <xfn:AssignString xfn:variable="Svar_duration2" xfn:value="Svar_totalTime"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="0" css:min="0" css:result="Svar_dateString3"/>
+      <xfn:AssignString xfn:variable="Svar_duration3" xfn:value="0"/>
+      <xfn:Subtract xfn:number1="0" xfn:number2="Svar_targetCost" xfn:result="Svar_cost_cost1"/>
+	  <xfn:AssignString xfn:variable="Svar_cost_cost2" xfn:value="Svar_newCost"/>
+      <xfn:Subtract xfn:number1="Svar_newHour" xfn:number2="Svar_targetHour" xfn:result="Svar_cost_comfort"/>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="CheckContinuous2" xet:priority="2">
+    <xet:Head>
+      <CheckContinuous>
+        <Hour>Svar_newHour</Hour>
+        <Time>Svar_newTime</Time>
+        <Continuous>Svar_continuous</Continuous>
+        <TargetCost>Svar_targetCost</TargetCost>
+        <NewCost>Svar_newCost</NewCost>
+        <TotalTime>Svar_totalTime</TotalTime>
+      </CheckContinuous>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:StringEqual xfn:string1="Svar_continuous" xfn:string2="false"/>
+    </xet:Condition>
+    <xet:Body>
+      <css:CurrentTime css:res_time="Svar_curTime" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <xfn:Divide xfn:number1="Svar_curTime" xfn:number2="3600" xfn:result="Svar_curHourTemp"/>
+      <xfn:Modulo xfn:number1="Svar_curHourTemp" xfn:number2="24" xfn:result="Svar_curHour"/>
+      <xfn:Add xfn:number1="Svar_curHour" xfn:number2="1" xfn:result="Svar_targetHour"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="0" css:result="Svar_dateString1"/>
+      <xfn:AssignString xfn:variable="Svar_duration1" xfn:value="180"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_newHour" css:min="Svar_newTime" css:result="Svar_dateString2"/>
+      <xfn:Add xfn:number1="Svar_totalTime" xfn:number2="60" xfn:result="Svar_duration2"/>
+      <xfn:Add xfn:number1="Svar_newHour" xfn:number2="1" xfn:result="Svar_pauseHour"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_pauseHour" css:min="0" css:result="Svar_dateString3"/>
+      <xfn:AssignString xfn:variable="Svar_duration3" xfn:value="60"/>
+      <xfn:Subtract xfn:number1="0" xfn:number2="Svar_targetCost" xfn:result="Svar_cost_cost1"/>
+	  <xfn:AssignString xfn:variable="Svar_cost_cost2" xfn:value="Svar_newCost"/>
+      <xfn:Subtract xfn:number1="Svar_newHour" xfn:number2="Svar_targetHour" xfn:result="Svar_cost_comfort"/>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="GenAction1_1" xet:priority="1">
+    <xet:Head>
+      <GeneratAction1>
+	    <HourMin1>Svar_hourMin1</HourMin1>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus>Svar_hourPlus</HourPlus>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_movement</Movement>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plusCost</CostForward>
+	    <CostBack>Svar_min1Cost</CostBack>
+	    <Forward>Svar_forward</Forward>
+	    <Back>Svar_back</Back>
+	    <Duration>Svar_duration</Duration>
+	    <NewTime>Svar_newTime</NewTime>
+      </GeneratAction1>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:StringEqual xfn:string1="Svar_movement" xfn:string2="forward"/>
+    </xet:Condition>
+    <xet:Body>
+      <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="0" css:result="Svar_dateString1"/>
+      <xfn:AssignString xfn:variable="Svar_duration1" xfn:value="Svar_duration"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_hourPlus" css:min="0" css:result="Svar_dateString2"/>
+      <xfn:AssignString xfn:variable="Svar_duration2" xfn:value="Svar_totalTime"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="0" css:min="0" css:result="Svar_dateString3"/>
+      <xfn:AssignString xfn:variable="Svar_duration3" xfn:value="0"/>
+      <xfn:Subtract xfn:number1="0" xfn:number2="Svar_targetCost" xfn:result="Svar_cost_cost1"/>
+      <xfn:AssignString xfn:variable="Svar_cost_cost2" xfn:value="Svar_plusCost"/>
+      <xfn:AssignString xfn:variable="Svar_cost_comfort" xfn:value="Svar_forward"/>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="GenAction1_2" xet:priority="2">
+    <xet:Head>
+      <GeneratAction1>
+	    <HourMin1>Svar_hourMin1</HourMin1>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus>Svar_hourPlus</HourPlus>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_movement</Movement>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plusCost</CostForward>
+	    <CostBack>Svar_min1Cost</CostBack>
+	    <Forward>Svar_forward</Forward>
+	    <Back>Svar_back</Back>
+	    <Duration>Svar_duration</Duration>
+	    <NewTime>Svar_newTime</NewTime>
+      </GeneratAction1>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:StringEqual xfn:string1="Svar_movement" xfn:string2="back"/>
+    </xet:Condition>
+    <xet:Body>
+      <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="0" css:result="Svar_dateString1"/>
+      <xfn:AssignString xfn:variable="Svar_duration1" xfn:value="Svar_duration"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_hourMin1" css:min="Svar_newTime" css:result="Svar_dateString2"/>
+      <xfn:AssignString xfn:variable="Svar_duration2" xfn:value="Svar_totalTime"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="0" css:min="0" css:result="Svar_dateString3"/>
+      <xfn:AssignString xfn:variable="Svar_duration3" xfn:value="0"/>
+      <xfn:Subtract xfn:number1="0" xfn:number2="Svar_targetCost" xfn:result="Svar_cost_cost1"/>
+      <xfn:AssignString xfn:variable="Svar_cost_cost2" xfn:value="Svar_min1Cost"/>
+      <xfn:AssignString xfn:variable="Svar_cost_comfort" xfn:value="Svar_back"/>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="GenAction2" xet:priority="1">
+    <xet:Head>
+      <GenerateAction2>
+        <Key>Svar_key</Key>
+        <TargetHour>Svar_targetHour</TargetHour>
+        <NewHour>Svar_newHour</NewHour>
+        <NewTime>Svar_newTime</NewTime>
+        <FinishTime>Svar_finishTime</FinishTime>
+        <HourPlus1>Svar_hourPlus1</HourPlus1>
+        <TotalTime>Svar_totalTime</TotalTime>
+        <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+        <NewPrice>Svar_newPrice</NewPrice>
+      </GenerateAction2>
+    </xet:Head>
+    <xet:Body>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="TimeChain" sfn:result="Svar_timeKey"/>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="PowerChain" sfn:result="Svar_powerKey"/>		
+	  <xfn:GetInMemoryObject xfn:key="Svar_timeKey" xfn:result="Svar_timeChain"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_powerKey" xfn:result="Svar_powerChain"/>
+      <xfn:Subtract xfn:number1="Svar_finishTime" xfn:number2="Svar_hourPlus1" xfn:result="Svar_temp"/>
+      <xfn:Multiply xfn:number1="Svar_temp" xfn:number2="60" xfn:result="Svar_timeToCal"/>
+      <css:CalculateEnergy css:time="Svar_timeToCal" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain"
+        css:result="Svar_subEnergy1"/>
+      <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="0" css:result="Svar_dateString1"/>
+      <xfn:AssignString xfn:variable="Svar_duration1" xfn:value="120"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_newHour" css:min="Svar_newTime" css:result="Svar_dateString2"/>
+      <xfn:AssignString xfn:variable="Svar_duration2" xfn:value="Svar_totalTime"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="0" css:min="0" css:result="Svar_dateString3"/>
+      <xfn:AssignString xfn:variable="Svar_duration3" xfn:value="0"/>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="Energy" sfn:result="Svar_energyKey"/>
+      <xfn:GetInMemoryObject xfn:key="Svar_energyKey" xfn:result="Svar_totalEnergy"/>
+      <xfn:Subtract xfn:number1="Svar_totalEnergy" xfn:number2="Svar_subEnergy1" xfn:result="Svar_subEnergy2"/>
+      <xfn:Multiply xfn:number1="Svar_subEnergy1" xfn:number2="Svar_plus1Price" xfn:result="Svar_subCost1"/>
+      <xfn:Multiply xfn:number1="Svar_subEnergy2" xfn:number2="Svar_targetPrice" xfn:result="Svar_subCost2"/>
+      <xfn:Add xfn:number1="Svar_subCost1" xfn:number2="Svar_subCost2" xfn:result="Svar_originalCost"/>
+      <xfn:Subtract xfn:number1="0" xfn:number2="Svar_originalCost" xfn:result="Svar_cost_cost1"/>
+      <xfn:Multiply xfn:number1="Svar_totalEnergy" xfn:number2="Svar_newPrice" xfn:result="Svar_cost_cost2"/>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="GenAction3_1" xet:priority="1">
+    <xet:Head>
+      <GeneratAction3>
+        <Key>Svar_key</Key>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_movement</Movement>
+	    <Min1Price>Svar_min1Price</Min1Price>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plus1Cost</CostForward>
+	    <CostBack>Svar_min1Cost</CostBack>
+	    <Forward>Svar_forward</Forward>
+	    <Back>Svar_back</Back>
+      </GeneratAction3>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:StringEqual xfn:string1="Svar_movement" xfn:string2="forward"/>
+    </xet:Condition>
+    <xet:Body>
+      <xfn:Subtract xfn:number1="120" xfn:number2="Svar_totalTime" xfn:result="Svar_newTime"/>
+      <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="0" css:result="Svar_dateString1"/>
+      <xfn:AssignString xfn:variable="Svar_duration1" xfn:value="120"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="Svar_newTime" css:result="Svar_dateString2"/>
+      <xfn:AssignString xfn:variable="Svar_duration2" xfn:value="Svar_totalTime"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="0" css:min="0" css:result="Svar_dateString3"/>
+      <xfn:AssignString xfn:variable="Svar_duration3" xfn:value="0"/>
+      <xfn:Subtract xfn:number1="0" xfn:number2="Svar_targetCost" xfn:result="Svar_cost_cost1"/>
+      <xfn:AssignString xfn:variable="Svar_cost_cost2" xfn:value="Svar_plus1Cost"/>
+      <xfn:AssignString xfn:variable="Svar_cost_comfort" xfn:value="Svar_forward"/>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="GenAction3_2" xet:priority="2">
+    <xet:Head>
+      <GeneratAction3>
+        <Key>Svar_key</Key>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_movement</Movement>
+	    <Min1Price>Svar_min1Price</Min1Price>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plus1Cost</CostForward>
+	    <CostBack>Svar_min1Cost</CostBack>
+	    <Forward>Svar_forward</Forward>
+	    <Back>Svar_back</Back>
+      </GeneratAction3>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:StringEqual xfn:string1="Svar_movement" xfn:string2="back"/>
+    </xet:Condition>
+    <xet:Body>
+      <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="0" css:result="Svar_dateString1"/>
+      <xfn:AssignString xfn:variable="Svar_duration1" xfn:value="120"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="0" css:result="Svar_dateString2"/>
+      <xfn:AssignString xfn:variable="Svar_duration2" xfn:value="Svar_totalTime"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="0" css:min="0" css:result="Svar_dateString3"/>
+      <xfn:AssignString xfn:variable="Svar_duration3" xfn:value="0"/>
+      <xfn:Subtract xfn:number1="0" xfn:number2="Svar_targetCost" xfn:result="Svar_cost_cost1"/>
+      <xfn:AssignString xfn:variable="Svar_cost_cost2" xfn:value="Svar_min1Cost"/>
+      <xfn:AssignString xfn:variable="Svar_cost_comfort" xfn:value="Svar_back"/>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="GenAction3_3" xet:priority="3">
+    <xet:Head>
+      <GeneratAction3>
+        <Key>Svar_key</Key>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_movement</Movement>
+	    <Min1Price>Svar_min1Price</Min1Price>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plus1Cost</CostForward>
+	    <CostBack>Svar_min1Cost</CostBack>
+	    <Forward>Svar_forward</Forward>
+	    <Back>Svar_back</Back>
+      </GeneratAction3>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:StringEqual xfn:string1="Svar_movement" xfn:string2="none"/>
+      <xfn:Or>
+        <xfn:NumberEqual xfn:number1="Svar_targetCost" xfn:number2="Svar_plus1Cost"/>
+        <xfn:NumberEqual xfn:number1="Svar_targetCost" xfn:number2="Svar_min1Cost"/>
+      </xfn:Or>
+    </xet:Condition>
+    <xet:Body>
+      <xfn:Subtract xfn:number1="1" xfn:number2="Svar_back" xfn:result="Svar_newForward"/>
+      <xfn:Subtract xfn:number1="1" xfn:number2="Svar_forward" xfn:result="Svar_newBack"/>
+      <xfn:Subtract xfn:number1="Svar_totalTime" xfn:number2="60" xfn:result="Svar_timeToCal"/>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="TimeChain" sfn:result="Svar_timeKey"/>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="PowerChain" sfn:result="Svar_powerKey"/>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="Energy" sfn:result="Svar_energyKey"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_timeKey" xfn:result="Svar_timeChain"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_powerKey" xfn:result="Svar_powerChain"/>	
+	  <xfn:GetInMemoryObject xfn:key="Svar_energyKey" xfn:result="Svar_totalEnergy"/>
+	  <css:CalculateEnergy css:time="60" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy1"/>
+	  <css:CalculateEnergy css:time="Svar_timeToCal" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy2"/>
+	  <xfn:Subtract xfn:number1="Svar_totalEnergy" xfn:number2="Svar_subEnergy1" xfn:result="Svar_left1"/>
+	  <xfn:Subtract xfn:number1="Svar_totalEnergy" xfn:number2="Svar_subEnergy2" xfn:result="Svar_left2"/>
+	  <xfn:Multiply xfn:number1="Svar_left1" xfn:number2="Svar_min1Price" xfn:result="Svar_minCost1"/>
+	  <xfn:Multiply xfn:number1="Svar_subEnergy1" xfn:number2="Svar_targetPrice" xfn:result="Svar_minCost2"/>
+	  <xfn:Add xfn:number1="Svar_minCost1" xfn:number2="Svar_minCost2" xfn:result="Svar_minCost"/>
+	  <xfn:Subtract xfn:number1="Svar_minCost" xfn:number2="Svar_targetCost" xfn:result="Svar_backCost"/>
+	  <xfn:Multiply xfn:number1="Svar_left2" xfn:number2="Svar_plus1Price" xfn:result="Svar_plusCost1"/>
+	  <xfn:Multiply xfn:number1="Svar_subEnergy2" xfn:number2="Svar_plus2Price" xfn:result="Svar_plusCost2"/>
+	  <xfn:Add xfn:number1="Svar_plusCost1" xfn:number2="Svar_plusCost2" xfn:result="Svar_plusCost"/>
+	  <xfn:Subtract xfn:number1="Svar_plusCost" xfn:number2="Svar_targetCost" xfn:result="Svar_forwardCost"/>
+	  <css:GetMovement css:forward="Svar_newForward" css:costForward="Svar_forwardCost" css:back="Svar_newBack" css:costBack="Svar_backCost" css:result="Svar_newMovement"/>
+	  <xfn:Subtract xfn:number1="Svar_targetHour" xfn:number2="1" xfn:result="Svar_hourMin1"/>
+	  <xfn:AssignString xfn:variable="Svar_duration" xfn:value="120"/>
+	  <xfn:Subtract xfn:number1="120" xfn:number2="Svar_totalTime" xfn:result="Svar_newTime"/>
+	  <xfn:Add xfn:number1="Svar_targetHour" xfn:number2="1" xfn:result="Svar_hourPlus1"/>
+	  <GeneratAction1>
+	    <HourMin1>Svar_hourMin1</HourMin1>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus>Svar_hourPlus1</HourPlus>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_newMovement</Movement>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plusCost</CostForward>
+	    <CostBack>Svar_minCost</CostBack>
+	    <Forward>Svar_newForward</Forward>
+	    <Back>Svar_newBack</Back>
+	    <Duration>Svar_duration</Duration>
+	    <NewTime>Svar_newTime</NewTime>
+	  </GeneratAction1>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="GenAction4_1" xet:priority="1">
+    <xet:Head>
+      <GeneratAction4>
+        <Key>Svar_key</Key>
+	    <HourMin1>Svar_hourMin1</HourMin1>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus>Svar_hourPlus</HourPlus>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_movement</Movement>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plusCost</CostForward>
+	    <CostBack>Svar_min1Cost</CostBack>
+	    <Forward>Svar_forward</Forward>
+	    <Back>Svar_back</Back>
+	    <Duration>Svar_duration</Duration>
+	    <NewTime>Svar_newTime</NewTime>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+      </GeneratAction4>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:StringEqual xfn:string1="Svar_movement" xfn:string2="forward"/>
+    </xet:Condition>
+    <xet:Body>
+      <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="0" css:result="Svar_dateString1"/>
+      <xfn:AssignString xfn:variable="Svar_duration1" xfn:value="Svar_duration"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_hourPlus" css:min="0" css:result="Svar_dateString2"/>
+      <xfn:AssignString xfn:variable="Svar_duration2" xfn:value="Svar_totalTime"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="0" css:min="0" css:result="Svar_dateString3"/>
+      <xfn:AssignString xfn:variable="Svar_duration3" xfn:value="0"/>
+      <xfn:Subtract xfn:number1="0" xfn:number2="Svar_targetCost" xfn:result="Svar_cost_cost1"/>
+      <xfn:AssignString xfn:variable="Svar_cost_cost2" xfn:value="Svar_plusCost"/>
+      <xfn:AssignString xfn:variable="Svar_cost_comfort" xfn:value="Svar_forward"/>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="GenAction4_2" xet:priority="2">
+    <xet:Head>
+      <GeneratAction4>
+        <Key>Svar_key</Key>
+	    <HourMin1>Svar_hourMin1</HourMin1>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus>Svar_hourPlus</HourPlus>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_movement</Movement>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plusCost</CostForward>
+	    <CostBack>Svar_min1Cost</CostBack>
+	    <Forward>Svar_forward</Forward>
+	    <Back>Svar_back</Back>
+	    <Duration>Svar_duration</Duration>
+	    <NewTime>Svar_newTime</NewTime>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+      </GeneratAction4>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:StringEqual xfn:string1="Svar_movement" xfn:string2="back"/>
+    </xet:Condition>
+    <xet:Body>
+      <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="0" css:result="Svar_dateString1"/>
+      <xfn:AssignString xfn:variable="Svar_duration1" xfn:value="Svar_duration"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_hourMin1" css:min="Svar_newTime" css:result="Svar_dateString2"/>
+      <xfn:AssignString xfn:variable="Svar_duration2" xfn:value="Svar_totalTime"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="0" css:min="0" css:result="Svar_dateString3"/>
+      <xfn:AssignString xfn:variable="Svar_duration3" xfn:value="0"/>
+      <xfn:Subtract xfn:number1="0" xfn:number2="Svar_targetCost" xfn:result="Svar_cost_cost1"/>
+      <xfn:AssignString xfn:variable="Svar_cost_cost2" xfn:value="Svar_min1Cost"/>
+      <xfn:AssignString xfn:variable="Svar_cost_comfort" xfn:value="Svar_back"/>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="GenAction4_3" xet:priority="3">
+    <xet:Head>
+      <GeneratAction4>
+        <Key>Svar_key</Key>
+	    <HourMin1>Svar_hourMin1</HourMin1>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <HourPlus>Svar_hourPlus</HourPlus>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_movement</Movement>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plusCost</CostForward>
+	    <CostBack>Svar_min1Cost</CostBack>
+	    <Forward>Svar_forward</Forward>
+	    <Back>Svar_back</Back>
+	    <Duration>Svar_duration</Duration>
+	    <NewTime>Svar_newTime</NewTime>
+	    <TargetPrice>Svar_targetPrice</TargetPrice>
+	    <Plus1Price>Svar_plus1Price</Plus1Price>
+	    <Plus2Price>Svar_plus2Price</Plus2Price>
+      </GeneratAction4>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:StringEqual xfn:string1="Svar_movement" xfn:string2="none"/>
+    </xet:Condition>
+    <xet:Body>
+      <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="TimeChain" sfn:result="Svar_timeKey"/>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="PowerChain" sfn:result="Svar_powerKey"/>
+	  <sfn:ConcatString sfn:string1="Svar_key" sfn:string2="Energy" sfn:result="Svar_energyKey"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_timeKey" xfn:result="Svar_timeChain"/>
+	  <xfn:GetInMemoryObject xfn:key="Svar_powerKey" xfn:result="Svar_powerChain"/>	
+	  <xfn:GetInMemoryObject xfn:key="Svar_energyKey" xfn:result="Svar_totalEnergy"/>
+      <xfn:Subtract xfn:number1="Svar_totalTime" xfn:number2="60" xfn:result="Svar_timeToCal"/>
+      <css:CalculateEnergy css:time="Svar_timeToCal" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy1"/>
+      <css:CalculateEnergy css:time="60" css:timeChain="Svar_timeChain" css:powerChain="Svar_powerChain" css:result="Svar_subEnergy2"/>
+      <xfn:Subtract xfn:number1="Svar_totalEnergy" xfn:number2="Svar_subEnergy1" xfn:result="Svar_left1"/>
+      <xfn:Subtract xfn:number1="Svar_totalEnergy" xfn:number2="Svar_subEnergy2" xfn:result="Svar_left2"/>
+      <xfn:Multiply xfn:number1="Svar_left1" xfn:number2="Svar_targetPrice" xfn:result="Svar_newMin1Cost1"/>
+      <xfn:Multiply xfn:number1="Svar_subEnergy1" xfn:number2="Svar_plus1Price" xfn:result="Svar_newMin1Cost2"/>
+      <xfn:Add xfn:number1="Svar_newMin1Cost1" xfn:number2="Svar_newMin1Cost2" xfn:result="Svar_newMin1Cost"/>
+      <xfn:Multiply xfn:number1="Svar_left2" xfn:number2="Svar_plus1Price" xfn:result="Svar_newPlusCost1"/>
+      <xfn:Multiply xfn:number1="Svar_subEnergy2" xfn:number2="Svar_plus2Price" xfn:result="Svar_newPlusCost2"/>
+      <xfn:Add xfn:number1="Svar_newPlusCost1" xfn:number2="Svar_newPlusCost2" xfn:result="Svar_newPlusCost"/>
+      <xfn:Subtract xfn:number1="Svar_newMin1Cost" xfn:number2="Svar_targetCost" xfn:result="Svar_backCost"/>
+      <xfn:Subtract xfn:number1="Svar_newPlusCost" xfn:number2="Svar_targetCost" xfn:result="Svar_forwardCost"/>
+      <xfn:Subtract xfn:number1="1" xfn:number2="Svar_back" xfn:result="Svar_newForward"/>
+      <xfn:Subtract xfn:number1="1" xfn:number2="Svar_forward" xfn:result="Svar_newBack"/>
+      <css:GetMovement css:forward="Svar_newForward" css:costForward="Svar_forwardCost" css:back="Svar_newBack" css:costBack="Svar_backCost" css:result="Svar_newMovement"/>
+      <GeneratAction5>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_newMovement</Movement>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_newPlusCost</CostForward>
+	    <CostBack>Svar_newMin1Cost</CostBack>
+	    <Forward>Svar_newForward</Forward>
+	    <Back>Svar_newBack</Back>
+      </GeneratAction5>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="GenAction5_1" xet:priority="1">
+    <xet:Head>
+      <GeneratAction5>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_movement</Movement>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plusCost</CostForward>
+	    <CostBack>Svar_minCost</CostBack>
+	    <Forward>Svar_forward</Forward>
+	    <Back>Svar_back</Back>
+      </GeneratAction5>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:StringEqual xfn:string1="Svar_movement" xfn:string2="forward"/>
+    </xet:Condition>
+    <xet:Body>
+      <xfn:Subtract xfn:number1="120" xfn:number2="Svar_totalTime" xfn:result="Svar_newTime"/>
+      <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="0" css:result="Svar_dateString1"/>
+      <xfn:AssignString xfn:variable="Svar_duration1" xfn:value="180"/>
+      <xfn:Add xfn:number1="Svar_targetHour" xfn:number2="1" xfn:result="Svar_hourPlus1"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_hourPlus1" css:min="Svar_newTime" css:result="Svar_dateString2"/>
+      <xfn:AssignString xfn:variable="Svar_duration2" xfn:value="Svar_totalTime"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="0" css:min="0" css:result="Svar_dateString3"/>
+      <xfn:AssignString xfn:variable="Svar_duration3" xfn:value="0"/>
+      <xfn:Subtract xfn:number1="0" xfn:number2="Svar_targetCost" xfn:result="Svar_cost_cost1"/>
+      <xfn:AssignString xfn:variable="Svar_cost_cost2" xfn:value="Svar_plusCost"/>
+      <xfn:AssignString xfn:variable="Svar_cost_comfort" xfn:value="Svar_forward"/>
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="GenAction5_2" xet:priority="2">
+    <xet:Head>
+      <GeneratAction5>
+	    <TargetHour>Svar_targetHour</TargetHour>
+	    <TotalTime>Svar_totalTime</TotalTime>
+	    <Movement>Svar_movement</Movement>
+	    <OriginalCost>Svar_targetCost</OriginalCost>
+	    <CostForward>Svar_plusCost</CostForward>
+	    <CostBack>Svar_minCost</CostBack>
+	    <Forward>Svar_forward</Forward>
+	    <Back>Svar_back</Back>
+      </GeneratAction5>
+    </xet:Head>
+    <xet:Condition>
+      <xfn:StringEqual xfn:string1="Svar_movement" xfn:string2="back"/>
+    </xet:Condition>
+    <xet:Body>
+      <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="0" css:result="Svar_dateString1"/>
+      <xfn:AssignString xfn:variable="Svar_duration1" xfn:value="180"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_targetHour" css:min="0" css:result="Svar_dateString2"/>
+      <xfn:AssignString xfn:variable="Svar_duration2" xfn:value="Svar_totalTime"/>
+      <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="0" css:min="0" css:result="Svar_dateString3"/>
+      <xfn:AssignString xfn:variable="Svar_duration3" xfn:value="0"/>
+      <xfn:Subtract xfn:number1="0" xfn:number2="Svar_targetCost" xfn:result="Svar_cost_cost1"/>
+      <xfn:AssignString xfn:variable="Svar_cost_cost2" xfn:value="Svar_minCost"/>
+      <xfn:AssignString xfn:variable="Svar_cost_comfort" xfn:value="Svar_back"/>
+    </xet:Body>
+  </xet:Rule>
+</xet:XET>

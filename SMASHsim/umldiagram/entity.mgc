@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassDiagram>
+    <Class name="no.ntnu.item.smash.sim.structure.Device" x="268" y="182">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Extension destinationClassName="no.ntnu.item.smash.sim.structure.Entity"/>
+    </Class>
+    <Class name="no.ntnu.item.smash.sim.model.LightModel" x="560" y="355">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Extension destinationClassName="no.ntnu.item.smash.sim.model.DeviceModel"/>
+        <Association
+            destinationClassName="no.ntnu.item.smash.sim.structure.Light"
+            endpointName="light" kind="Simple"/>
+        <Communication destinationClassName="no.ntnu.item.smash.sim.structure.Device"/>
+        <Communication destinationClassName="no.ntnu.item.smash.sim.structure.Plan"/>
+        <Communication destinationClassName="no.ntnu.item.smash.sim.model.DeviceModel"/>
+    </Class>
+    <Class name="no.ntnu.item.smash.sim.structure.Light" x="553" y="275">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Extension destinationClassName="no.ntnu.item.smash.sim.structure.Device"/>
+    </Class>
+    <Class name="no.ntnu.item.smash.sim.structure.Entity" x="520" y="59">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+    </Class>
+    <Class name="no.ntnu.item.smash.sim.structure.WMSchedule" x="230" y="850">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+    </Class>
+    <Class name="no.ntnu.item.smash.sim.structure.Plan" x="821" y="520">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+    </Class>
+    <Class name="no.ntnu.item.smash.sim.model.DeviceModel" x="529" y="558">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Association
+            destinationClassName="no.ntnu.item.smash.sim.structure.Device"
+            endpointName="device" kind="Simple"/>
+        <Association
+            destinationClassName="no.ntnu.item.smash.sim.structure.Room"
+            endpointName="room" kind="Simple"/>
+    </Class>
+    <Class name="no.ntnu.item.smash.sim.structure.WashingMachine"
+        x="305" y="429">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Extension destinationClassName="no.ntnu.item.smash.sim.structure.Device"/>
+    </Class>
+    <Class name="no.ntnu.item.smash.sim.structure.WMPlan" x="395" y="849">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+    </Class>
+    <Class name="no.ntnu.item.smash.sim.model.WashingMachineModel"
+        x="244" y="540">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Extension destinationClassName="no.ntnu.item.smash.sim.model.DeviceModel"/>
+        <Association
+            destinationClassName="no.ntnu.item.smash.sim.structure.WashingMachine"
+            endpointName="machine" kind="Simple"/>
+        <Communication destinationClassName="no.ntnu.item.smash.sim.structure.WMSchedule"/>
+        <Communication destinationClassName="no.ntnu.item.smash.sim.model.DeviceModel"/>
+        <Communication destinationClassName="no.ntnu.item.smash.sim.structure.WMPlan"/>
+        <Communication destinationClassName="no.ntnu.item.smash.sim.structure.WashingMachine"/>
+    </Class>
+    <Class name="no.ntnu.item.smash.sim.structure.Room" x="786" y="88">
+        <AttributesDisplayFilter public-accepted="true"
+            private-accepted="true" protected-accepted="true"
+            default-accepted="true" static-accepted="false"/>
+        <MethodDisplayFilter public-accepted="true"
+            private-accepted="false" protected-accepted="false"
+            default-accepted="false" static-accepted="false"
+            accessors-accepted="false" constructors-accepted="false"/>
+        <Extension destinationClassName="no.ntnu.item.smash.sim.structure.Entity"/>
+        <Association
+            destinationClassName="no.ntnu.item.smash.sim.structure.Plan"
+            endpointName="plan" kind="Simple"/>
+        <Association
+            destinationClassName="no.ntnu.item.smash.sim.structure.Plan"
+            endpointName="lightPlan" kind="Simple">
+            <Point x="1003" y="528"/>
+        </Association>
+        <Association
+            destinationClassName="no.ntnu.item.smash.sim.structure.Device"
+            endpointName="devices" kind="Simple"/>
+        <Communication destinationClassName="no.ntnu.item.smash.sim.structure.Device"/>
+    </Class>
+    <Note x="800" y="668">WMSchedule has a createProgramSchedule()&#xd;
+method,which gives every working day a &#xd;
+random program represented by a string value.&#xd;
+The created schedule is the one in the &#xd;
+machine model.&#xd;
+&#xd;
+WMplan is a weekly plan for the washing &#xd;
+machine, none-zero values indicate the start &#xd;
+time of a working day, while zero values&#xd;
+indicate the machine will not work that day.</Note>
+</ClassDiagram>

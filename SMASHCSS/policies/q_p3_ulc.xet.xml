@@ -1,0 +1,17 @@
+<xet:XET xmlns:xet="http://xet.sf.net" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:smash="http://smash.item.ntnu.no#">
+  <xet:Query>
+    <xet:QueryClause>
+	  <xet:Head>
+	    <smash:Actions>
+	      Evar_entities
+	    </smash:Actions>
+	  </xet:Head>
+	  <xet:Body>
+	    <smash:Actions>
+	      Evar_entities
+	    </smash:Actions>
+	  </xet:Body>
+	</xet:QueryClause>
+  </xet:Query>
+</xet:XET>

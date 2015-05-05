@@ -1,0 +1,65 @@
+<xet:XET xmlns:xet="http://xet.sf.net" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:smash="http://smash.item.ntnu.no#">
+  <xet:Fact>
+  	<smash:Entity rdf:about="LivingRoom">
+  	  <smash:PhyscialSpec>
+  	    <smash:length>4</smash:length>
+  	    <smash:width>4</smash:width>
+  	    <smash:height>2.6</smash:height>
+  	  </smash:PhyscialSpec>
+  	  <smash:DeviceSpec>
+  	  	<smash:power>2400</smash:power>
+  	  </smash:DeviceSpec>
+  	  <smash:ComfortSpec>
+	    <smash:normalComfort>26</smash:normalComfort>
+		<smash:reducedComfort>21</smash:reducedComfort>
+		<smash:unacceptableComfort>18</smash:unacceptableComfort>
+	  </smash:ComfortSpec>
+  	</smash:Entity>
+  	<smash:Entity rdf:about="Kitchen">
+  	  <smash:PhyscialSpec>
+  	    <smash:length>4</smash:length>
+  	    <smash:width>3</smash:width>
+  	    <smash:height>2.6</smash:height>
+  	  </smash:PhyscialSpec>
+  	  <smash:DeviceSpec>
+  	  	<smash:power>1200</smash:power>
+  	  </smash:DeviceSpec>
+  	  <smash:ComfortSpec>
+	    <smash:normalComfort>25</smash:normalComfort>
+		<smash:reducedComfort>20</smash:reducedComfort>
+		<smash:unacceptableComfort>17</smash:unacceptableComfort>
+	  </smash:ComfortSpec>
+  	</smash:Entity>
+  	<smash:Entity rdf:about="Bathroom1">
+  	  <smash:PhyscialSpec>
+  	    <smash:length>5</smash:length>
+  	    <smash:width>2.75</smash:width>
+  	    <smash:height>2.6</smash:height>
+  	  </smash:PhyscialSpec>
+  	  <smash:DeviceSpec>
+  	  	<smash:power>1500</smash:power>
+  	  </smash:DeviceSpec>
+  	  <smash:ComfortSpec>
+	    <smash:normalComfort>28</smash:normalComfort>
+		<smash:reducedComfort>24</smash:reducedComfort>
+		<smash:unacceptableComfort>20</smash:unacceptableComfort>
+	  </smash:ComfortSpec>
+  	</smash:Entity>
+  	<smash:Entity rdf:about="Bathroom2">
+  	  <smash:PhyscialSpec>
+  	    <smash:length>4</smash:length>
+  	    <smash:width>2.5</smash:width>
+  	    <smash:height>2.6</smash:height>
+  	  </smash:PhyscialSpec>
+  	  <smash:DeviceSpec>
+  	  	<smash:power>1500</smash:power>
+  	  </smash:DeviceSpec>
+  	  <smash:ComfortSpec>
+	    <smash:normalComfort>28</smash:normalComfort>
+		<smash:reducedComfort>20</smash:reducedComfort>
+		<smash:unacceptableComfort>18</smash:unacceptableComfort>
+	  </smash:ComfortSpec>
+  	</smash:Entity>
+  </xet:Fact>
+</xet:XET>

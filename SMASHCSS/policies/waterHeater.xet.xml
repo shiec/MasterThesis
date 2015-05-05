@@ -1,0 +1,91 @@
+<xet:XET xmlns:xet="http://xet.sf.net" xmlns:xfn="http://tapas.item.ntnu.no/NxET/built-in/corefunctions" 
+		 xmlns:sfn="http://tapas.item.ntnu.no/NxET/built-in/string"
+	     xmlns:tfn="http://tapas.item.ntnu.no/NxET/built-in/time"
+		 xmlns:css="http://smash.item.ntnu.no/NxET/built-in"
+         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:smash="http://smash.item.ntnu.no#">
+  <xet:Meta>
+    <xet:SpecificationVersion>0.1</xet:SpecificationVersion>
+  </xet:Meta>
+  <xet:Data>datasources.xet.xml</xet:Data>
+  <xet:Rule xet:name='ConstructSet' xet:priority='1'>
+    <xet:Head>
+      <smash:Actions smash:setNumber="Svar_sn">
+	      Evar_entities
+	  </smash:Actions>
+    </xet:Head>
+    <xet:Body>
+      <xfn:SetOf xfn:mode='Set'>
+        <xfn:Set>Evar_entities</xfn:Set>
+        <xfn:Constructor>
+		  Evar_entitySchedule
+        </xfn:Constructor>
+        <xfn:Condition>
+          <CheckSpecification/>  
+		</xfn:Condition>
+      </xfn:SetOf>
+	  <xfn:Add xfn:number1="0" xfn:number2="1" xfn:result="Svar_sn" />
+    </xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='CheckSpecification' xet:priority='1'>
+    <xet:Head>
+	  <CheckSpecification/>
+	</xet:Head>
+	<xet:Body>
+	  <css:GetRemoteData css:provider="DSO" css:operation="getEstElectricityPrices" css:return_prices="Svar_Data_prices"/>
+	  <css:DetectPeakDownwardTrend>
+	    <css:PriceData>Svar_Data_prices</css:PriceData>
+		<css:Difference>0.2</css:Difference>
+		<css:ResultSet>
+		  Evar_peakMap
+		</css:ResultSet>
+	  </css:DetectPeakDownwardTrend>
+	  <CheckEntities>Evar_peakMap</CheckEntities>
+	</xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name='CheckEntities' xet:priority='1'>
+    <xet:Head>
+	  <CheckEntities>Evar_highPricedHours</CheckEntities>
+	</xet:Head>
+	<xet:Body>
+	  <xfn:LoopSet xfn:mode='Map'>
+	    <xfn:Maps>
+		  Evar_highPricedHours
+		</xfn:Maps>
+		<xfn:Extract>
+		  <xfn:Map>
+		    <xfn:Key>Svar_t</xfn:Key>
+		  </xfn:Map>
+		</xfn:Extract>
+	  </xfn:LoopSet>
+	  <css:CurrentTime css:res_time="Svar_curHour" css:res_day="Svar_curDay" css:res_month="Svar_curMonth" css:res_year="Svar_curYear"/>
+	  <css:ConstructTime css:year="Svar_curYear" css:month="Svar_curMonth" css:day="Svar_curDay" css:hour="Svar_t" css:min="0" css:result="Svar_t_dateString"/>
+	  <xfn:SetOf xfn:mode='Set'>
+        <xfn:Set>Evar_entitySchedule</xfn:Set>
+        <xfn:Constructor>
+		<smash:ActionSet smash:set="1" smash:key1="Bathroom1" smash:key2="Svar_t">
+		  <smash:Action smash:type="EWHSchedulingAction">
+		    <smash:Entity>Bathroom1</smash:Entity>
+			<smash:start>Svar_t_dateString</smash:start>
+	        <smash:duration>60</smash:duration>
+	        <smash:newTemp>0</smash:newTemp>
+		  </smash:Action>
+		</smash:ActionSet>
+        </xfn:Constructor>
+        <xfn:Condition>
+		  <Do/>
+		</xfn:Condition>
+      </xfn:SetOf>
+	</xet:Body>
+  </xet:Rule>
+  <xet:Rule xet:name="Do" xet:priority="1">
+    <xet:Head> 
+	  <Do/>
+	</xet:Head>
+	<xet:Body>
+	  <xet:ExecutionSequence>
+	    <xfn:True/>
+	  </xet:ExecutionSequence>
+	</xet:Body>
+  </xet:Rule>
+</xet:XET>
